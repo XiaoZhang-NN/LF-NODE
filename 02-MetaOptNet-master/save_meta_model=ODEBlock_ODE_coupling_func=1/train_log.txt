@@ -1,0 +1,694 @@
+{'num_epoch': 60, 'save_epoch': 10, 'train_shot': 5, 'val_shot': 5, 'train_query': 6, 'val_episode': 2000, 'val_query': 15, 'train_way': 5, 'test_way': 5, 'gpu': '0', 'network': 'ODEBlock_ODE', 'head': 'Ridge', 'dataset': 'CIFAR_FS', 'episodes_per_batch': 8, 'eps': 0.0, 'seed': 0, 'num_block': 2, 'step_size': 0.05, 'depth': 1.0, 'hidden_dim': 1000, 'coupling': 2, 'coupling_func': 1, 'coupling_alpha': 1, 'func_size': 1.0, 'alpha_size': 1.0}
+Train Epoch: 1	Learning Rate: 0.1000
+Train Epoch: 1	Batch: [100/1000]	Loss: 1.2933	Accuracy: 41.85 % (53.75 %)	Tain_time: 0.6156
+Train Epoch: 1	Batch: [200/1000]	Loss: 1.4134	Accuracy: 43.19 % (39.58 %)	Tain_time: 0.5859
+Train Epoch: 1	Batch: [300/1000]	Loss: 1.3580	Accuracy: 44.18 % (45.83 %)	Tain_time: 0.5763
+Train Epoch: 1	Batch: [400/1000]	Loss: 1.3034	Accuracy: 44.79 % (46.25 %)	Tain_time: 0.5713
+Train Epoch: 1	Batch: [500/1000]	Loss: 1.2063	Accuracy: 45.46 % (52.92 %)	Tain_time: 0.5683
+Train Epoch: 1	Batch: [600/1000]	Loss: 1.1784	Accuracy: 46.36 % (55.83 %)	Tain_time: 0.5667
+Train Epoch: 1	Batch: [700/1000]	Loss: 1.1908	Accuracy: 47.15 % (52.50 %)	Tain_time: 0.5656
+Train Epoch: 1	Batch: [800/1000]	Loss: 1.1922	Accuracy: 48.02 % (53.75 %)	Tain_time: 0.5648
+Train Epoch: 1	Batch: [900/1000]	Loss: 1.1456	Accuracy: 48.84 % (53.75 %)	Tain_time: 0.5640
+Train Epoch: 1	Batch: [1000/1000]	Loss: 1.1988	Accuracy: 49.64 % (52.92 %)	Tain_time: 0.5635
+Validation Epoch: 1			Loss: 1.2375	Accuracy: 49.63 ± 0.41 % (Best)
+Elapsed Time: 17m/16.9h
+
+Train Epoch: 2	Learning Rate: 0.1000
+Train Epoch: 2	Batch: [100/1000]	Loss: 0.9466	Accuracy: 57.65 % (65.00 %)	Tain_time: 0.5735
+Train Epoch: 2	Batch: [200/1000]	Loss: 1.0167	Accuracy: 58.24 % (59.17 %)	Tain_time: 0.5660
+Train Epoch: 2	Batch: [300/1000]	Loss: 1.0944	Accuracy: 58.93 % (57.92 %)	Tain_time: 0.5622
+Train Epoch: 2	Batch: [400/1000]	Loss: 1.0218	Accuracy: 59.28 % (61.25 %)	Tain_time: 0.5603
+Train Epoch: 2	Batch: [500/1000]	Loss: 0.8951	Accuracy: 59.77 % (65.42 %)	Tain_time: 0.5593
+Train Epoch: 2	Batch: [600/1000]	Loss: 0.9676	Accuracy: 60.19 % (61.67 %)	Tain_time: 0.5587
+Train Epoch: 2	Batch: [700/1000]	Loss: 1.0698	Accuracy: 60.59 % (58.75 %)	Tain_time: 0.5585
+Train Epoch: 2	Batch: [800/1000]	Loss: 0.9477	Accuracy: 60.89 % (62.08 %)	Tain_time: 0.5580
+Train Epoch: 2	Batch: [900/1000]	Loss: 0.9830	Accuracy: 61.22 % (60.83 %)	Tain_time: 0.5580
+Train Epoch: 2	Batch: [1000/1000]	Loss: 0.8538	Accuracy: 61.48 % (67.92 %)	Tain_time: 0.5580
+Validation Epoch: 2			Loss: 1.2994	Accuracy: 47.38 ± 0.39 %
+Elapsed Time: 33m/16.7h
+
+Train Epoch: 3	Learning Rate: 0.1000
+Train Epoch: 3	Batch: [100/1000]	Loss: 1.0255	Accuracy: 64.89 % (62.08 %)	Tain_time: 0.5687
+Train Epoch: 3	Batch: [200/1000]	Loss: 0.7918	Accuracy: 64.99 % (68.33 %)	Tain_time: 0.5678
+Train Epoch: 3	Batch: [300/1000]	Loss: 1.0578	Accuracy: 65.02 % (57.08 %)	Tain_time: 0.5671
+Train Epoch: 3	Batch: [400/1000]	Loss: 0.8787	Accuracy: 65.19 % (65.42 %)	Tain_time: 0.5654
+Train Epoch: 3	Batch: [500/1000]	Loss: 0.9778	Accuracy: 65.32 % (65.42 %)	Tain_time: 0.5637
+Train Epoch: 3	Batch: [600/1000]	Loss: 0.8283	Accuracy: 65.46 % (67.92 %)	Tain_time: 0.5627
+Train Epoch: 3	Batch: [700/1000]	Loss: 0.8752	Accuracy: 65.70 % (69.17 %)	Tain_time: 0.5620
+Train Epoch: 3	Batch: [800/1000]	Loss: 0.8291	Accuracy: 65.84 % (69.58 %)	Tain_time: 0.5619
+Train Epoch: 3	Batch: [900/1000]	Loss: 0.8587	Accuracy: 66.00 % (65.83 %)	Tain_time: 0.5616
+Train Epoch: 3	Batch: [1000/1000]	Loss: 0.8477	Accuracy: 66.09 % (65.83 %)	Tain_time: 0.5616
+Validation Epoch: 3			Loss: 1.3600	Accuracy: 44.75 ± 0.39 %
+Elapsed Time: 50m/16.6h
+
+Train Epoch: 4	Learning Rate: 0.1000
+Train Epoch: 4	Batch: [100/1000]	Loss: 0.9116	Accuracy: 67.49 % (67.08 %)	Tain_time: 0.5628
+Train Epoch: 4	Batch: [200/1000]	Loss: 0.7015	Accuracy: 67.84 % (77.08 %)	Tain_time: 0.5640
+Train Epoch: 4	Batch: [300/1000]	Loss: 0.9462	Accuracy: 67.93 % (63.75 %)	Tain_time: 0.5644
+Train Epoch: 4	Batch: [400/1000]	Loss: 0.7275	Accuracy: 67.90 % (73.75 %)	Tain_time: 0.5663
+Train Epoch: 4	Batch: [500/1000]	Loss: 0.8344	Accuracy: 68.07 % (65.42 %)	Tain_time: 0.5667
+Train Epoch: 4	Batch: [600/1000]	Loss: 0.7344	Accuracy: 68.17 % (72.92 %)	Tain_time: 0.5656
+Train Epoch: 4	Batch: [700/1000]	Loss: 0.7837	Accuracy: 68.11 % (69.58 %)	Tain_time: 0.5643
+Train Epoch: 4	Batch: [800/1000]	Loss: 0.8600	Accuracy: 68.23 % (67.50 %)	Tain_time: 0.5632
+Train Epoch: 4	Batch: [900/1000]	Loss: 0.7130	Accuracy: 68.30 % (72.92 %)	Tain_time: 0.5623
+Train Epoch: 4	Batch: [1000/1000]	Loss: 0.8288	Accuracy: 68.38 % (70.00 %)	Tain_time: 0.5615
+Validation Epoch: 4			Loss: 1.3823	Accuracy: 44.04 ± 0.35 %
+Elapsed Time: 1.1h/16.5h
+
+Train Epoch: 5	Learning Rate: 0.1000
+Train Epoch: 5	Batch: [100/1000]	Loss: 0.7808	Accuracy: 69.44 % (72.08 %)	Tain_time: 0.5651
+Train Epoch: 5	Batch: [200/1000]	Loss: 0.6836	Accuracy: 69.39 % (74.17 %)	Tain_time: 0.5653
+Train Epoch: 5	Batch: [300/1000]	Loss: 0.7002	Accuracy: 69.39 % (74.17 %)	Tain_time: 0.5658
+Train Epoch: 5	Batch: [400/1000]	Loss: 0.8494	Accuracy: 69.53 % (67.50 %)	Tain_time: 0.5659
+Train Epoch: 5	Batch: [500/1000]	Loss: 0.7827	Accuracy: 69.52 % (71.25 %)	Tain_time: 0.5662
+Train Epoch: 5	Batch: [600/1000]	Loss: 0.9784	Accuracy: 69.61 % (63.33 %)	Tain_time: 0.5664
+Train Epoch: 5	Batch: [700/1000]	Loss: 0.7280	Accuracy: 69.67 % (74.58 %)	Tain_time: 0.5669
+Train Epoch: 5	Batch: [800/1000]	Loss: 0.7991	Accuracy: 69.79 % (70.83 %)	Tain_time: 0.5664
+Train Epoch: 5	Batch: [900/1000]	Loss: 0.8084	Accuracy: 69.88 % (67.50 %)	Tain_time: 0.5653
+Train Epoch: 5	Batch: [1000/1000]	Loss: 0.6678	Accuracy: 69.96 % (73.75 %)	Tain_time: 0.5648
+Validation Epoch: 5			Loss: 1.3071	Accuracy: 46.64 ± 0.40 %
+Elapsed Time: 1.4h/16.5h
+
+Train Epoch: 6	Learning Rate: 0.1000
+Train Epoch: 6	Batch: [100/1000]	Loss: 0.7153	Accuracy: 70.96 % (72.08 %)	Tain_time: 0.5544
+Train Epoch: 6	Batch: [200/1000]	Loss: 0.7994	Accuracy: 70.80 % (67.08 %)	Tain_time: 0.5533
+Train Epoch: 6	Batch: [300/1000]	Loss: 0.7346	Accuracy: 70.77 % (73.75 %)	Tain_time: 0.5575
+Train Epoch: 6	Batch: [400/1000]	Loss: 0.6360	Accuracy: 70.90 % (74.58 %)	Tain_time: 0.5606
+Train Epoch: 6	Batch: [500/1000]	Loss: 0.8045	Accuracy: 70.96 % (66.67 %)	Tain_time: 0.5617
+Train Epoch: 6	Batch: [600/1000]	Loss: 0.6720	Accuracy: 71.01 % (74.58 %)	Tain_time: 0.5628
+Train Epoch: 6	Batch: [700/1000]	Loss: 0.6357	Accuracy: 71.05 % (75.42 %)	Tain_time: 0.5634
+Train Epoch: 6	Batch: [800/1000]	Loss: 0.6889	Accuracy: 71.16 % (75.00 %)	Tain_time: 0.5641
+Train Epoch: 6	Batch: [900/1000]	Loss: 0.7854	Accuracy: 71.23 % (70.83 %)	Tain_time: 0.5649
+Train Epoch: 6	Batch: [1000/1000]	Loss: 0.8169	Accuracy: 71.27 % (64.58 %)	Tain_time: 0.5650
+Validation Epoch: 6			Loss: 1.2784	Accuracy: 48.62 ± 0.40 %
+Elapsed Time: 1.6h/16.5h
+
+Train Epoch: 7	Learning Rate: 0.1000
+Train Epoch: 7	Batch: [100/1000]	Loss: 0.8151	Accuracy: 71.70 % (70.83 %)	Tain_time: 0.5546
+Train Epoch: 7	Batch: [200/1000]	Loss: 0.7158	Accuracy: 71.59 % (70.00 %)	Tain_time: 0.5540
+Train Epoch: 7	Batch: [300/1000]	Loss: 0.6399	Accuracy: 71.70 % (77.08 %)	Tain_time: 0.5538
+Train Epoch: 7	Batch: [400/1000]	Loss: 0.6823	Accuracy: 71.76 % (73.33 %)	Tain_time: 0.5541
+Train Epoch: 7	Batch: [500/1000]	Loss: 0.6786	Accuracy: 71.90 % (73.75 %)	Tain_time: 0.5566
+Train Epoch: 7	Batch: [600/1000]	Loss: 0.7412	Accuracy: 71.88 % (70.42 %)	Tain_time: 0.5584
+Train Epoch: 7	Batch: [700/1000]	Loss: 0.8343	Accuracy: 71.85 % (65.00 %)	Tain_time: 0.5590
+Train Epoch: 7	Batch: [800/1000]	Loss: 0.8052	Accuracy: 71.82 % (70.00 %)	Tain_time: 0.5587
+Train Epoch: 7	Batch: [900/1000]	Loss: 0.6604	Accuracy: 71.83 % (75.83 %)	Tain_time: 0.5586
+Train Epoch: 7	Batch: [1000/1000]	Loss: 0.6867	Accuracy: 71.90 % (75.00 %)	Tain_time: 0.5583
+Validation Epoch: 7			Loss: 1.3850	Accuracy: 43.93 ± 0.36 %
+Elapsed Time: 1.9h/16.3h
+
+Train Epoch: 8	Learning Rate: 0.1000
+Train Epoch: 8	Batch: [100/1000]	Loss: 0.7619	Accuracy: 72.34 % (70.00 %)	Tain_time: 0.5530
+Train Epoch: 8	Batch: [200/1000]	Loss: 0.6043	Accuracy: 72.45 % (77.50 %)	Tain_time: 0.5523
+Train Epoch: 8	Batch: [300/1000]	Loss: 0.8065	Accuracy: 72.36 % (65.42 %)	Tain_time: 0.5528
+Train Epoch: 8	Batch: [400/1000]	Loss: 0.7485	Accuracy: 72.41 % (70.00 %)	Tain_time: 0.5525
+Train Epoch: 8	Batch: [500/1000]	Loss: 0.8068	Accuracy: 72.51 % (68.75 %)	Tain_time: 0.5531
+Train Epoch: 8	Batch: [600/1000]	Loss: 0.5573	Accuracy: 72.40 % (80.00 %)	Tain_time: 0.5537
+Train Epoch: 8	Batch: [700/1000]	Loss: 0.7629	Accuracy: 72.46 % (69.17 %)	Tain_time: 0.5544
+Train Epoch: 8	Batch: [800/1000]	Loss: 0.6946	Accuracy: 72.49 % (73.33 %)	Tain_time: 0.5551
+Train Epoch: 8	Batch: [900/1000]	Loss: 0.6422	Accuracy: 72.48 % (74.17 %)	Tain_time: 0.5556
+Train Epoch: 8	Batch: [1000/1000]	Loss: 0.6673	Accuracy: 72.45 % (76.67 %)	Tain_time: 0.5563
+Validation Epoch: 8			Loss: 1.3542	Accuracy: 44.59 ± 0.38 %
+Elapsed Time: 2.2h/16.2h
+
+Train Epoch: 9	Learning Rate: 0.1000
+{'num_epoch': 60, 'save_epoch': 10, 'train_shot': 5, 'val_shot': 5, 'train_query': 6, 'val_episode': 2000, 'val_query': 15, 'train_way': 5, 'test_way': 5, 'gpu': '0,3', 'network': 'ODEBlock_ODE', 'head': 'Ridge', 'dataset': 'CIFAR_FS', 'episodes_per_batch': 8, 'eps': 0.0, 'seed': 0, 'num_block': 2, 'step_size': 0.05, 'depth': 1.0, 'hidden_dim': 1000, 'coupling': 2, 'coupling_func': 1, 'coupling_alpha': 1, 'func_size': 1.0, 'alpha_size': 1.0}
+Train Epoch: 9	Batch: [100/1000]	Loss: 0.7166	Accuracy: 73.63 % (71.25 %)	Tain_time: 0.5572
+Train Epoch: 9	Batch: [200/1000]	Loss: 0.6105	Accuracy: 73.15 % (77.92 %)	Tain_time: 0.5566
+Train Epoch: 9	Batch: [300/1000]	Loss: 0.6735	Accuracy: 72.93 % (75.00 %)	Tain_time: 0.5570
+Train Epoch: 9	Batch: [400/1000]	Loss: 0.6680	Accuracy: 73.05 % (72.92 %)	Tain_time: 0.5572
+Train Epoch: 9	Batch: [500/1000]	Loss: 0.6865	Accuracy: 73.00 % (71.67 %)	Tain_time: 0.5579
+Train Epoch: 9	Batch: [600/1000]	Loss: 0.6498	Accuracy: 72.91 % (74.58 %)	Tain_time: 0.5583
+Train Epoch: 9	Batch: [700/1000]	Loss: 0.8207	Accuracy: 72.86 % (69.17 %)	Tain_time: 0.5585
+Train Epoch: 9	Batch: [800/1000]	Loss: 0.7623	Accuracy: 72.99 % (70.83 %)	Tain_time: 0.5590
+Train Epoch: 9	Batch: [900/1000]	Loss: 0.6641	Accuracy: 73.00 % (78.33 %)	Tain_time: 0.5598
+Train Epoch: 9	Batch: [1000/1000]	Loss: 0.7896	Accuracy: 73.00 % (69.58 %)	Tain_time: 0.5605
+Validation Epoch: 9			Loss: 1.4308	Accuracy: 43.75 ± 0.37 %
+Elapsed Time: 2.5h/16.3h
+
+Train Epoch: 10	Learning Rate: 0.1000
+Train Epoch: 10	Batch: [100/1000]	Loss: 0.7435	Accuracy: 73.57 % (71.25 %)	Tain_time: 0.5835
+Train Epoch: 10	Batch: [200/1000]	Loss: 0.7064	Accuracy: 73.03 % (72.92 %)	Tain_time: 0.5785
+Train Epoch: 10	Batch: [300/1000]	Loss: 0.7506	Accuracy: 73.30 % (68.33 %)	Tain_time: 0.5720
+Train Epoch: 10	Batch: [400/1000]	Loss: 0.6580	Accuracy: 73.38 % (77.08 %)	Tain_time: 0.5700
+Train Epoch: 10	Batch: [500/1000]	Loss: 0.6240	Accuracy: 73.37 % (78.75 %)	Tain_time: 0.5680
+Train Epoch: 10	Batch: [600/1000]	Loss: 0.7284	Accuracy: 73.38 % (74.17 %)	Tain_time: 0.5673
+Train Epoch: 10	Batch: [700/1000]	Loss: 0.7378	Accuracy: 73.47 % (71.67 %)	Tain_time: 0.5676
+Train Epoch: 10	Batch: [800/1000]	Loss: 0.7393	Accuracy: 73.56 % (71.67 %)	Tain_time: 0.5686
+Train Epoch: 10	Batch: [900/1000]	Loss: 0.7643	Accuracy: 73.53 % (70.42 %)	Tain_time: 0.5693
+Train Epoch: 10	Batch: [1000/1000]	Loss: 0.7453	Accuracy: 73.53 % (73.75 %)	Tain_time: 0.5700
+Validation Epoch: 10			Loss: 1.4117	Accuracy: 42.49 ± 0.37 %
+Elapsed Time: 2.7h/16.4h
+
+Train Epoch: 11	Learning Rate: 0.1000
+Train Epoch: 11	Batch: [100/1000]	Loss: 0.9201	Accuracy: 73.20 % (67.08 %)	Tain_time: 0.5752
+Train Epoch: 11	Batch: [200/1000]	Loss: 0.5978	Accuracy: 73.57 % (77.50 %)	Tain_time: 0.5756
+Train Epoch: 11	Batch: [300/1000]	Loss: 0.7068	Accuracy: 73.70 % (71.67 %)	Tain_time: 0.5755
+Train Epoch: 11	Batch: [400/1000]	Loss: 0.5795	Accuracy: 73.89 % (76.67 %)	Tain_time: 0.5715
+Train Epoch: 11	Batch: [500/1000]	Loss: 0.7744	Accuracy: 73.74 % (68.75 %)	Tain_time: 0.5690
+Train Epoch: 11	Batch: [600/1000]	Loss: 0.6343	Accuracy: 73.66 % (74.58 %)	Tain_time: 0.5674
+Train Epoch: 11	Batch: [700/1000]	Loss: 0.7713	Accuracy: 73.70 % (69.58 %)	Tain_time: 0.5661
+Train Epoch: 11	Batch: [800/1000]	Loss: 0.5886	Accuracy: 73.76 % (78.75 %)	Tain_time: 0.5654
+Train Epoch: 11	Batch: [900/1000]	Loss: 0.6752	Accuracy: 73.78 % (72.50 %)	Tain_time: 0.5650
+Train Epoch: 11	Batch: [1000/1000]	Loss: 0.7583	Accuracy: 73.78 % (71.25 %)	Tain_time: 0.5647
+Validation Epoch: 11			Loss: 1.3880	Accuracy: 44.00 ± 0.37 %
+Elapsed Time: 3.0h/16.5h
+
+Train Epoch: 12	Learning Rate: 0.1000
+Train Epoch: 12	Batch: [100/1000]	Loss: 0.6782	Accuracy: 74.18 % (74.58 %)	Tain_time: 0.5790
+Train Epoch: 12	Batch: [200/1000]	Loss: 0.5636	Accuracy: 73.95 % (78.75 %)	Tain_time: 0.5770
+Train Epoch: 12	Batch: [300/1000]	Loss: 0.7269	Accuracy: 73.95 % (72.50 %)	Tain_time: 0.5765
+Train Epoch: 12	Batch: [400/1000]	Loss: 0.6502	Accuracy: 74.12 % (75.42 %)	Tain_time: 0.5763
+Train Epoch: 12	Batch: [500/1000]	Loss: 0.7326	Accuracy: 74.11 % (71.25 %)	Tain_time: 0.5756
+Train Epoch: 12	Batch: [600/1000]	Loss: 0.6044	Accuracy: 74.03 % (77.50 %)	Tain_time: 0.5731
+Train Epoch: 12	Batch: [700/1000]	Loss: 0.6568	Accuracy: 74.00 % (75.42 %)	Tain_time: 0.5711
+Train Epoch: 12	Batch: [800/1000]	Loss: 0.6742	Accuracy: 74.02 % (73.75 %)	Tain_time: 0.5696
+Train Epoch: 12	Batch: [900/1000]	Loss: 0.6758	Accuracy: 74.01 % (75.00 %)	Tain_time: 0.5685
+Train Epoch: 12	Batch: [1000/1000]	Loss: 0.7154	Accuracy: 74.07 % (72.50 %)	Tain_time: 0.5680
+Validation Epoch: 12			Loss: 1.3778	Accuracy: 45.09 ± 0.38 %
+Elapsed Time: 3.3h/16.5h
+
+Train Epoch: 13	Learning Rate: 0.1000
+Train Epoch: 13	Batch: [100/1000]	Loss: 0.6983	Accuracy: 73.91 % (74.17 %)	Tain_time: 0.5732
+Train Epoch: 13	Batch: [200/1000]	Loss: 0.8219	Accuracy: 73.80 % (66.67 %)	Tain_time: 0.5730
+Train Epoch: 13	Batch: [300/1000]	Loss: 0.7334	Accuracy: 73.97 % (68.75 %)	Tain_time: 0.5729
+Train Epoch: 13	Batch: [400/1000]	Loss: 0.6701	Accuracy: 74.07 % (76.25 %)	Tain_time: 0.5738
+Train Epoch: 13	Batch: [500/1000]	Loss: 0.6624	Accuracy: 74.04 % (74.17 %)	Tain_time: 0.5742
+Train Epoch: 13	Batch: [600/1000]	Loss: 0.7643	Accuracy: 74.05 % (74.17 %)	Tain_time: 0.5750
+Train Epoch: 13	Batch: [700/1000]	Loss: 0.7080	Accuracy: 73.92 % (76.67 %)	Tain_time: 0.5731
+Train Epoch: 13	Batch: [800/1000]	Loss: 0.7086	Accuracy: 74.01 % (73.75 %)	Tain_time: 0.5713
+Train Epoch: 13	Batch: [900/1000]	Loss: 0.6967	Accuracy: 74.07 % (72.92 %)	Tain_time: 0.5700
+Train Epoch: 13	Batch: [1000/1000]	Loss: 0.7889	Accuracy: 74.12 % (70.00 %)	Tain_time: 0.5692
+Validation Epoch: 13			Loss: 1.3624	Accuracy: 46.32 ± 0.38 %
+Elapsed Time: 3.6h/16.5h
+
+Train Epoch: 14	Learning Rate: 0.1000
+Train Epoch: 14	Batch: [100/1000]	Loss: 0.7334	Accuracy: 74.32 % (72.50 %)	Tain_time: 0.5786
+Train Epoch: 14	Batch: [200/1000]	Loss: 0.5612	Accuracy: 74.78 % (77.08 %)	Tain_time: 0.5764
+Train Epoch: 14	Batch: [300/1000]	Loss: 0.5754	Accuracy: 74.53 % (77.08 %)	Tain_time: 0.5759
+Train Epoch: 14	Batch: [400/1000]	Loss: 0.6313	Accuracy: 74.74 % (75.42 %)	Tain_time: 0.5764
+Train Epoch: 14	Batch: [500/1000]	Loss: 0.6572	Accuracy: 74.68 % (77.50 %)	Tain_time: 0.5769
+Train Epoch: 14	Batch: [600/1000]	Loss: 0.8772	Accuracy: 74.74 % (65.42 %)	Tain_time: 0.5770
+Train Epoch: 14	Batch: [700/1000]	Loss: 0.6711	Accuracy: 74.60 % (73.33 %)	Tain_time: 0.5763
+Train Epoch: 14	Batch: [800/1000]	Loss: 0.7223	Accuracy: 74.57 % (76.25 %)	Tain_time: 0.5756
+Train Epoch: 14	Batch: [900/1000]	Loss: 0.6326	Accuracy: 74.60 % (75.42 %)	Tain_time: 0.5742
+Train Epoch: 14	Batch: [1000/1000]	Loss: 0.7379	Accuracy: 74.62 % (72.08 %)	Tain_time: 0.5734
+Validation Epoch: 14			Loss: 1.3089	Accuracy: 47.68 ± 0.39 %
+Elapsed Time: 3.9h/16.5h
+
+Train Epoch: 15	Learning Rate: 0.1000
+Train Epoch: 15	Batch: [100/1000]	Loss: 0.7599	Accuracy: 74.44 % (72.50 %)	Tain_time: 0.5631
+Train Epoch: 15	Batch: [200/1000]	Loss: 0.6657	Accuracy: 74.30 % (76.25 %)	Tain_time: 0.5704
+Train Epoch: 15	Batch: [300/1000]	Loss: 0.7689	Accuracy: 74.41 % (72.08 %)	Tain_time: 0.5730
+Train Epoch: 15	Batch: [400/1000]	Loss: 0.7000	Accuracy: 74.58 % (74.58 %)	Tain_time: 0.5739
+Train Epoch: 15	Batch: [500/1000]	Loss: 0.6609	Accuracy: 74.67 % (76.25 %)	Tain_time: 0.5741
+Train Epoch: 15	Batch: [600/1000]	Loss: 0.7172	Accuracy: 74.70 % (72.08 %)	Tain_time: 0.5747
+Train Epoch: 15	Batch: [700/1000]	Loss: 0.6475	Accuracy: 74.66 % (75.00 %)	Tain_time: 0.5756
+Train Epoch: 15	Batch: [800/1000]	Loss: 0.6515	Accuracy: 74.63 % (77.92 %)	Tain_time: 0.5759
+Train Epoch: 15	Batch: [900/1000]	Loss: 0.7410	Accuracy: 74.61 % (69.17 %)	Tain_time: 0.5757
+Train Epoch: 15	Batch: [1000/1000]	Loss: 0.7680	Accuracy: 74.61 % (72.08 %)	Tain_time: 0.5747
+Validation Epoch: 15			Loss: 1.3440	Accuracy: 46.29 ± 0.38 %
+Elapsed Time: 4.1h/16.5h
+
+Train Epoch: 16	Learning Rate: 0.1000
+Train Epoch: 16	Batch: [100/1000]	Loss: 0.6661	Accuracy: 73.76 % (77.92 %)	Tain_time: 0.5578
+Train Epoch: 16	Batch: [200/1000]	Loss: 0.6369	Accuracy: 74.24 % (75.83 %)	Tain_time: 0.5574
+Train Epoch: 16	Batch: [300/1000]	Loss: 0.8670	Accuracy: 74.51 % (63.33 %)	Tain_time: 0.5624
+Train Epoch: 16	Batch: [400/1000]	Loss: 0.7297	Accuracy: 74.50 % (72.08 %)	Tain_time: 0.5657
+Train Epoch: 16	Batch: [500/1000]	Loss: 0.5418	Accuracy: 74.53 % (82.08 %)	Tain_time: 0.5676
+Train Epoch: 16	Batch: [600/1000]	Loss: 0.5672	Accuracy: 74.70 % (77.50 %)	Tain_time: 0.5690
+Train Epoch: 16	Batch: [700/1000]	Loss: 0.5991	Accuracy: 74.69 % (77.50 %)	Tain_time: 0.5699
+Train Epoch: 16	Batch: [800/1000]	Loss: 0.6595	Accuracy: 74.84 % (73.75 %)	Tain_time: 0.5703
+Train Epoch: 16	Batch: [900/1000]	Loss: 0.6345	Accuracy: 74.85 % (77.08 %)	Tain_time: 0.5710
+Train Epoch: 16	Batch: [1000/1000]	Loss: 0.5247	Accuracy: 74.81 % (79.58 %)	Tain_time: 0.5715
+Validation Epoch: 16			Loss: 1.3449	Accuracy: 45.89 ± 0.37 %
+Elapsed Time: 4.4h/16.5h
+
+Train Epoch: 17	Learning Rate: 0.1000
+Train Epoch: 17	Batch: [100/1000]	Loss: 0.5847	Accuracy: 75.08 % (78.75 %)	Tain_time: 0.5580
+Train Epoch: 17	Batch: [200/1000]	Loss: 0.5496	Accuracy: 75.42 % (80.42 %)	Tain_time: 0.5573
+Train Epoch: 17	Batch: [300/1000]	Loss: 0.6636	Accuracy: 75.18 % (79.17 %)	Tain_time: 0.5578
+Train Epoch: 17	Batch: [400/1000]	Loss: 0.7193	Accuracy: 75.19 % (75.42 %)	Tain_time: 0.5600
+Train Epoch: 17	Batch: [500/1000]	Loss: 0.5977	Accuracy: 75.18 % (77.50 %)	Tain_time: 0.5632
+Train Epoch: 17	Batch: [600/1000]	Loss: 0.5885	Accuracy: 75.14 % (73.75 %)	Tain_time: 0.5652
+Train Epoch: 17	Batch: [700/1000]	Loss: 0.7040	Accuracy: 75.19 % (74.17 %)	Tain_time: 0.5672
+Train Epoch: 17	Batch: [800/1000]	Loss: 0.6340	Accuracy: 75.13 % (76.67 %)	Tain_time: 0.5685
+Train Epoch: 17	Batch: [900/1000]	Loss: 0.6223	Accuracy: 75.14 % (80.00 %)	Tain_time: 0.5698
+Train Epoch: 17	Batch: [1000/1000]	Loss: 0.6269	Accuracy: 75.03 % (79.58 %)	Tain_time: 0.5704
+Validation Epoch: 17			Loss: 1.5213	Accuracy: 38.25 ± 0.33 %
+Elapsed Time: 4.7h/16.6h
+
+Train Epoch: 18	Learning Rate: 0.1000
+Train Epoch: 18	Batch: [100/1000]	Loss: 0.8875	Accuracy: 75.11 % (67.92 %)	Tain_time: 0.5575
+Train Epoch: 18	Batch: [200/1000]	Loss: 0.6759	Accuracy: 75.19 % (75.42 %)	Tain_time: 0.5570
+Train Epoch: 18	Batch: [300/1000]	Loss: 0.6485	Accuracy: 75.33 % (74.58 %)	Tain_time: 0.5574
+Train Epoch: 18	Batch: [400/1000]	Loss: 0.6868	Accuracy: 75.25 % (72.08 %)	Tain_time: 0.5580
+Train Epoch: 18	Batch: [500/1000]	Loss: 0.6713	Accuracy: 75.20 % (76.25 %)	Tain_time: 0.5596
+Train Epoch: 18	Batch: [600/1000]	Loss: 0.5805	Accuracy: 75.20 % (77.50 %)	Tain_time: 0.5626
+Train Epoch: 18	Batch: [700/1000]	Loss: 0.7226	Accuracy: 75.23 % (70.42 %)	Tain_time: 0.5648
+Train Epoch: 18	Batch: [800/1000]	Loss: 0.7372	Accuracy: 75.21 % (71.25 %)	Tain_time: 0.5667
+Train Epoch: 18	Batch: [900/1000]	Loss: 0.6249	Accuracy: 75.28 % (75.83 %)	Tain_time: 0.5679
+Train Epoch: 18	Batch: [1000/1000]	Loss: 0.7413	Accuracy: 75.30 % (71.25 %)	Tain_time: 0.5687
+Validation Epoch: 18			Loss: 1.3306	Accuracy: 47.08 ± 0.38 %
+Elapsed Time: 5.0h/16.6h
+
+Train Epoch: 19	Learning Rate: 0.1000
+Train Epoch: 19	Batch: [100/1000]	Loss: 0.6222	Accuracy: 75.53 % (76.67 %)	Tain_time: 0.5585
+Train Epoch: 19	Batch: [200/1000]	Loss: 0.5874	Accuracy: 75.64 % (80.42 %)	Tain_time: 0.5565
+Train Epoch: 19	Batch: [300/1000]	Loss: 0.8097	Accuracy: 75.46 % (70.42 %)	Tain_time: 0.5564
+Train Epoch: 19	Batch: [400/1000]	Loss: 0.6707	Accuracy: 75.37 % (76.25 %)	Tain_time: 0.5563
+Train Epoch: 19	Batch: [500/1000]	Loss: 0.6771	Accuracy: 75.44 % (74.17 %)	Tain_time: 0.5566
+Train Epoch: 19	Batch: [600/1000]	Loss: 0.7232	Accuracy: 75.44 % (74.58 %)	Tain_time: 0.5574
+Train Epoch: 19	Batch: [700/1000]	Loss: 0.5515	Accuracy: 75.35 % (81.25 %)	Tain_time: 0.5602
+Train Epoch: 19	Batch: [800/1000]	Loss: 0.5211	Accuracy: 75.33 % (83.33 %)	Tain_time: 0.5622
+Train Epoch: 19	Batch: [900/1000]	Loss: 0.5414	Accuracy: 75.35 % (81.67 %)	Tain_time: 0.5637
+Train Epoch: 19	Batch: [1000/1000]	Loss: 0.6264	Accuracy: 75.42 % (72.08 %)	Tain_time: 0.5647
+Validation Epoch: 19			Loss: 1.4317	Accuracy: 44.13 ± 0.36 %
+Elapsed Time: 5.3h/16.6h
+
+Train Epoch: 20	Learning Rate: 0.0060
+Train Epoch: 20	Batch: [100/1000]	Loss: 0.4952	Accuracy: 79.28 % (83.33 %)	Tain_time: 0.5591
+Train Epoch: 20	Batch: [200/1000]	Loss: 0.4486	Accuracy: 80.16 % (84.17 %)	Tain_time: 0.5568
+Train Epoch: 20	Batch: [300/1000]	Loss: 0.4629	Accuracy: 80.69 % (84.58 %)	Tain_time: 0.5566
+Train Epoch: 20	Batch: [400/1000]	Loss: 0.5012	Accuracy: 81.10 % (80.42 %)	Tain_time: 0.5567
+Train Epoch: 20	Batch: [500/1000]	Loss: 0.3317	Accuracy: 81.35 % (88.33 %)	Tain_time: 0.5567
+Train Epoch: 20	Batch: [600/1000]	Loss: 0.4212	Accuracy: 81.40 % (85.42 %)	Tain_time: 0.5571
+Train Epoch: 20	Batch: [700/1000]	Loss: 0.5073	Accuracy: 81.58 % (79.58 %)	Tain_time: 0.5576
+Train Epoch: 20	Batch: [800/1000]	Loss: 0.3553	Accuracy: 81.73 % (87.50 %)	Tain_time: 0.5595
+Train Epoch: 20	Batch: [900/1000]	Loss: 0.3586	Accuracy: 81.84 % (87.08 %)	Tain_time: 0.5618
+Train Epoch: 20	Batch: [1000/1000]	Loss: 0.4567	Accuracy: 81.98 % (82.08 %)	Tain_time: 0.5636
+Validation Epoch: 20			Loss: 1.4150	Accuracy: 42.51 ± 0.35 %
+Elapsed Time: 5.5h/16.6h
+
+Train Epoch: 21	Learning Rate: 0.0060
+Train Epoch: 21	Batch: [100/1000]	Loss: 0.3741	Accuracy: 83.11 % (86.25 %)	Tain_time: 0.5574
+Train Epoch: 21	Batch: [200/1000]	Loss: 0.2922	Accuracy: 83.29 % (91.25 %)	Tain_time: 0.5568
+Train Epoch: 21	Batch: [300/1000]	Loss: 0.4903	Accuracy: 83.36 % (82.92 %)	Tain_time: 0.5568
+Train Epoch: 21	Batch: [400/1000]	Loss: 0.5869	Accuracy: 83.51 % (77.50 %)	Tain_time: 0.5568
+Train Epoch: 21	Batch: [500/1000]	Loss: 0.4836	Accuracy: 83.52 % (80.83 %)	Tain_time: 0.5567
+Train Epoch: 21	Batch: [600/1000]	Loss: 0.4539	Accuracy: 83.53 % (83.33 %)	Tain_time: 0.5570
+Train Epoch: 21	Batch: [700/1000]	Loss: 0.3599	Accuracy: 83.61 % (87.92 %)	Tain_time: 0.5575
+Train Epoch: 21	Batch: [800/1000]	Loss: 0.3537	Accuracy: 83.60 % (89.17 %)	Tain_time: 0.5579
+Train Epoch: 21	Batch: [900/1000]	Loss: 0.4478	Accuracy: 83.60 % (81.67 %)	Tain_time: 0.5597
+Train Epoch: 21	Batch: [1000/1000]	Loss: 0.4535	Accuracy: 83.57 % (84.58 %)	Tain_time: 0.5615
+Validation Epoch: 21			Loss: 1.3423	Accuracy: 44.52 ± 0.37 %
+Elapsed Time: 5.8h/16.7h
+
+Train Epoch: 22	Learning Rate: 0.0060
+Train Epoch: 22	Batch: [100/1000]	Loss: 0.4404	Accuracy: 84.14 % (82.50 %)	Tain_time: 0.5571
+Train Epoch: 22	Batch: [200/1000]	Loss: 0.4559	Accuracy: 84.24 % (82.92 %)	Tain_time: 0.5567
+Train Epoch: 22	Batch: [300/1000]	Loss: 0.2595	Accuracy: 84.20 % (90.83 %)	Tain_time: 0.5565
+Train Epoch: 22	Batch: [400/1000]	Loss: 0.3856	Accuracy: 84.14 % (84.58 %)	Tain_time: 0.5567
+Train Epoch: 22	Batch: [500/1000]	Loss: 0.3653	Accuracy: 84.14 % (85.42 %)	Tain_time: 0.5577
+Train Epoch: 22	Batch: [600/1000]	Loss: 0.3289	Accuracy: 84.14 % (88.75 %)	Tain_time: 0.5577
+Train Epoch: 22	Batch: [700/1000]	Loss: 0.3594	Accuracy: 84.21 % (87.08 %)	Tain_time: 0.5579
+Train Epoch: 22	Batch: [800/1000]	Loss: 0.4145	Accuracy: 84.23 % (85.00 %)	Tain_time: 0.5584
+Train Epoch: 22	Batch: [900/1000]	Loss: 0.3217	Accuracy: 84.20 % (88.75 %)	Tain_time: 0.5587
+Train Epoch: 22	Batch: [1000/1000]	Loss: 0.3997	Accuracy: 84.20 % (85.83 %)	Tain_time: 0.5605
+Validation Epoch: 22			Loss: 1.3189	Accuracy: 45.28 ± 0.37 %
+Elapsed Time: 6.1h/16.7h
+
+Train Epoch: 23	Learning Rate: 0.0060
+Train Epoch: 23	Batch: [100/1000]	Loss: 0.3192	Accuracy: 84.23 % (87.92 %)	Tain_time: 0.5596
+Train Epoch: 23	Batch: [200/1000]	Loss: 0.4532	Accuracy: 84.49 % (82.92 %)	Tain_time: 0.5581
+Train Epoch: 23	Batch: [300/1000]	Loss: 0.3095	Accuracy: 84.37 % (88.33 %)	Tain_time: 0.5576
+Train Epoch: 23	Batch: [400/1000]	Loss: 0.4017	Accuracy: 84.37 % (82.92 %)	Tain_time: 0.5573
+Train Epoch: 23	Batch: [500/1000]	Loss: 0.3898	Accuracy: 84.49 % (83.33 %)	Tain_time: 0.5579
+Train Epoch: 23	Batch: [600/1000]	Loss: 0.3337	Accuracy: 84.55 % (91.67 %)	Tain_time: 0.5583
+Train Epoch: 23	Batch: [700/1000]	Loss: 0.3202	Accuracy: 84.61 % (88.75 %)	Tain_time: 0.5585
+Train Epoch: 23	Batch: [800/1000]	Loss: 0.4062	Accuracy: 84.64 % (85.83 %)	Tain_time: 0.5588
+Train Epoch: 23	Batch: [900/1000]	Loss: 0.4206	Accuracy: 84.63 % (82.08 %)	Tain_time: 0.5596
+Train Epoch: 23	Batch: [1000/1000]	Loss: 0.3169	Accuracy: 84.68 % (88.75 %)	Tain_time: 0.5601
+Validation Epoch: 23			Loss: 1.3347	Accuracy: 44.73 ± 0.38 %
+Elapsed Time: 6.4h/16.8h
+
+Train Epoch: 24	Learning Rate: 0.0060
+Train Epoch: 24	Batch: [100/1000]	Loss: 0.4276	Accuracy: 85.10 % (83.75 %)	Tain_time: 0.5614
+Train Epoch: 24	Batch: [200/1000]	Loss: 0.3807	Accuracy: 84.98 % (86.67 %)	Tain_time: 0.5592
+Train Epoch: 24	Batch: [300/1000]	Loss: 0.4536	Accuracy: 84.92 % (83.33 %)	Tain_time: 0.5583
+Train Epoch: 24	Batch: [400/1000]	Loss: 0.3114	Accuracy: 84.99 % (87.92 %)	Tain_time: 0.5588
+Train Epoch: 24	Batch: [500/1000]	Loss: 0.2983	Accuracy: 85.06 % (90.42 %)	Tain_time: 0.5587
+Train Epoch: 24	Batch: [600/1000]	Loss: 0.4795	Accuracy: 84.99 % (80.00 %)	Tain_time: 0.5588
+Train Epoch: 24	Batch: [700/1000]	Loss: 0.3689	Accuracy: 84.99 % (87.92 %)	Tain_time: 0.5591
+Train Epoch: 24	Batch: [800/1000]	Loss: 0.4688	Accuracy: 84.96 % (82.92 %)	Tain_time: 0.5595
+Train Epoch: 24	Batch: [900/1000]	Loss: 0.4761	Accuracy: 84.96 % (82.92 %)	Tain_time: 0.5603
+Train Epoch: 24	Batch: [1000/1000]	Loss: 0.2740	Accuracy: 85.00 % (87.92 %)	Tain_time: 0.5610
+Validation Epoch: 24			Loss: 1.3090	Accuracy: 45.89 ± 0.39 %
+Elapsed Time: 6.7h/16.8h
+
+Train Epoch: 25	Learning Rate: 0.0060
+Train Epoch: 25	Batch: [100/1000]	Loss: 0.2845	Accuracy: 85.47 % (90.83 %)	Tain_time: 0.5776
+Train Epoch: 25	Batch: [200/1000]	Loss: 0.2736	Accuracy: 85.19 % (89.17 %)	Tain_time: 0.5664
+Train Epoch: 25	Batch: [300/1000]	Loss: 0.4429	Accuracy: 85.19 % (83.33 %)	Tain_time: 0.5626
+Train Epoch: 25	Batch: [400/1000]	Loss: 0.3912	Accuracy: 85.14 % (85.00 %)	Tain_time: 0.5611
+Train Epoch: 25	Batch: [500/1000]	Loss: 0.3363	Accuracy: 85.18 % (90.00 %)	Tain_time: 0.5606
+Train Epoch: 25	Batch: [600/1000]	Loss: 0.4065	Accuracy: 85.17 % (85.42 %)	Tain_time: 0.5604
+Train Epoch: 25	Batch: [700/1000]	Loss: 0.3847	Accuracy: 85.22 % (83.75 %)	Tain_time: 0.5604
+Train Epoch: 25	Batch: [800/1000]	Loss: 0.4898	Accuracy: 85.23 % (79.58 %)	Tain_time: 0.5604
+Train Epoch: 25	Batch: [900/1000]	Loss: 0.4196	Accuracy: 85.25 % (85.83 %)	Tain_time: 0.5612
+Train Epoch: 25	Batch: [1000/1000]	Loss: 0.5599	Accuracy: 85.23 % (77.50 %)	Tain_time: 0.5625
+Validation Epoch: 25			Loss: 1.3474	Accuracy: 43.83 ± 0.36 %
+Elapsed Time: 7.0h/16.8h
+
+Train Epoch: 26	Learning Rate: 0.0060
+Train Epoch: 26	Batch: [100/1000]	Loss: 0.5557	Accuracy: 85.74 % (77.50 %)	Tain_time: 0.5748
+Train Epoch: 26	Batch: [200/1000]	Loss: 0.5624	Accuracy: 85.87 % (78.33 %)	Tain_time: 0.5736
+Train Epoch: 26	Batch: [300/1000]	Loss: 0.4116	Accuracy: 85.63 % (84.58 %)	Tain_time: 0.5683
+Train Epoch: 26	Batch: [400/1000]	Loss: 0.3342	Accuracy: 85.56 % (86.67 %)	Tain_time: 0.5659
+Train Epoch: 26	Batch: [500/1000]	Loss: 0.5007	Accuracy: 85.63 % (82.92 %)	Tain_time: 0.5642
+Train Epoch: 26	Batch: [600/1000]	Loss: 0.4178	Accuracy: 85.60 % (85.83 %)	Tain_time: 0.5636
+Train Epoch: 26	Batch: [700/1000]	Loss: 0.5275	Accuracy: 85.60 % (80.00 %)	Tain_time: 0.5632
+Train Epoch: 26	Batch: [800/1000]	Loss: 0.4372	Accuracy: 85.58 % (82.50 %)	Tain_time: 0.5633
+Train Epoch: 26	Batch: [900/1000]	Loss: 0.3941	Accuracy: 85.67 % (85.42 %)	Tain_time: 0.5637
+Train Epoch: 26	Batch: [1000/1000]	Loss: 0.4218	Accuracy: 85.67 % (83.33 %)	Tain_time: 0.5641
+Validation Epoch: 26			Loss: 1.3198	Accuracy: 44.92 ± 0.37 %
+Elapsed Time: 7.3h/16.9h
+
+Train Epoch: 27	Learning Rate: 0.0060
+Train Epoch: 27	Batch: [100/1000]	Loss: 0.4428	Accuracy: 86.03 % (84.58 %)	Tain_time: 0.5730
+Train Epoch: 27	Batch: [200/1000]	Loss: 0.3276	Accuracy: 85.98 % (87.92 %)	Tain_time: 0.5732
+Train Epoch: 27	Batch: [300/1000]	Loss: 0.5081	Accuracy: 85.76 % (77.92 %)	Tain_time: 0.5735
+Train Epoch: 27	Batch: [400/1000]	Loss: 0.4081	Accuracy: 85.95 % (83.33 %)	Tain_time: 0.5696
+Train Epoch: 27	Batch: [500/1000]	Loss: 0.4894	Accuracy: 85.93 % (84.17 %)	Tain_time: 0.5676
+Train Epoch: 27	Batch: [600/1000]	Loss: 0.2836	Accuracy: 85.88 % (90.00 %)	Tain_time: 0.5661
+Train Epoch: 27	Batch: [700/1000]	Loss: 0.3722	Accuracy: 85.82 % (87.50 %)	Tain_time: 0.5651
+Train Epoch: 27	Batch: [800/1000]	Loss: 0.2804	Accuracy: 85.77 % (89.17 %)	Tain_time: 0.5643
+Train Epoch: 27	Batch: [900/1000]	Loss: 0.4317	Accuracy: 85.78 % (83.33 %)	Tain_time: 0.5637
+Train Epoch: 27	Batch: [1000/1000]	Loss: 0.2642	Accuracy: 85.77 % (91.67 %)	Tain_time: 0.5633
+Validation Epoch: 27			Loss: 1.2827	Accuracy: 46.70 ± 0.38 %
+Elapsed Time: 7.6h/16.9h
+
+Train Epoch: 28	Learning Rate: 0.0060
+Train Epoch: 28	Batch: [100/1000]	Loss: 0.4184	Accuracy: 85.50 % (85.00 %)	Tain_time: 0.5757
+Train Epoch: 28	Batch: [200/1000]	Loss: 0.3253	Accuracy: 85.49 % (88.75 %)	Tain_time: 0.5748
+Train Epoch: 28	Batch: [300/1000]	Loss: 0.3863	Accuracy: 85.63 % (86.67 %)	Tain_time: 0.5742
+Train Epoch: 28	Batch: [400/1000]	Loss: 0.4238	Accuracy: 85.78 % (84.58 %)	Tain_time: 0.5752
+Train Epoch: 28	Batch: [500/1000]	Loss: 0.2823	Accuracy: 85.92 % (90.83 %)	Tain_time: 0.5720
+Train Epoch: 28	Batch: [600/1000]	Loss: 0.4636	Accuracy: 85.96 % (83.75 %)	Tain_time: 0.5696
+Train Epoch: 28	Batch: [700/1000]	Loss: 0.3918	Accuracy: 85.94 % (86.67 %)	Tain_time: 0.5678
+Train Epoch: 28	Batch: [800/1000]	Loss: 0.3592	Accuracy: 85.95 % (87.50 %)	Tain_time: 0.5668
+Train Epoch: 28	Batch: [900/1000]	Loss: 0.4011	Accuracy: 85.97 % (84.17 %)	Tain_time: 0.5659
+Train Epoch: 28	Batch: [1000/1000]	Loss: 0.4722	Accuracy: 85.96 % (82.50 %)	Tain_time: 0.5655
+Validation Epoch: 28			Loss: 1.3617	Accuracy: 43.27 ± 0.36 %
+Elapsed Time: 7.9h/16.9h
+
+Train Epoch: 29	Learning Rate: 0.0060
+Train Epoch: 29	Batch: [100/1000]	Loss: 0.4133	Accuracy: 85.98 % (86.25 %)	Tain_time: 0.5762
+Train Epoch: 29	Batch: [200/1000]	Loss: 0.5065	Accuracy: 86.02 % (77.92 %)	Tain_time: 0.5749
+Train Epoch: 29	Batch: [300/1000]	Loss: 0.3089	Accuracy: 86.05 % (88.75 %)	Tain_time: 0.5749
+Train Epoch: 29	Batch: [400/1000]	Loss: 0.5148	Accuracy: 85.89 % (82.92 %)	Tain_time: 0.5750
+Train Epoch: 29	Batch: [500/1000]	Loss: 0.4854	Accuracy: 85.91 % (84.17 %)	Tain_time: 0.5760
+Train Epoch: 29	Batch: [600/1000]	Loss: 0.3858	Accuracy: 85.96 % (85.83 %)	Tain_time: 0.5739
+Train Epoch: 29	Batch: [700/1000]	Loss: 0.4449	Accuracy: 86.01 % (85.42 %)	Tain_time: 0.5720
+Train Epoch: 29	Batch: [800/1000]	Loss: 0.2664	Accuracy: 86.01 % (92.08 %)	Tain_time: 0.5704
+Train Epoch: 29	Batch: [900/1000]	Loss: 0.3984	Accuracy: 86.02 % (85.42 %)	Tain_time: 0.5697
+Train Epoch: 29	Batch: [1000/1000]	Loss: 0.3372	Accuracy: 85.99 % (88.75 %)	Tain_time: 0.5689
+Validation Epoch: 29			Loss: 1.3352	Accuracy: 45.08 ± 0.37 %
+Elapsed Time: 8.2h/16.9h
+
+Train Epoch: 30	Learning Rate: 0.0060
+Train Epoch: 30	Batch: [100/1000]	Loss: 0.3590	Accuracy: 86.15 % (88.33 %)	Tain_time: 0.5800
+Train Epoch: 30	Batch: [200/1000]	Loss: 0.5523	Accuracy: 86.23 % (76.25 %)	Tain_time: 0.5761
+Train Epoch: 30	Batch: [300/1000]	Loss: 0.4312	Accuracy: 86.07 % (83.75 %)	Tain_time: 0.5745
+Train Epoch: 30	Batch: [400/1000]	Loss: 0.4443	Accuracy: 86.09 % (83.33 %)	Tain_time: 0.5752
+Train Epoch: 30	Batch: [500/1000]	Loss: 0.3490	Accuracy: 86.00 % (87.50 %)	Tain_time: 0.5760
+Train Epoch: 30	Batch: [600/1000]	Loss: 0.4073	Accuracy: 86.07 % (84.17 %)	Tain_time: 0.5762
+Train Epoch: 30	Batch: [700/1000]	Loss: 0.3577	Accuracy: 86.01 % (86.67 %)	Tain_time: 0.5750
+Train Epoch: 30	Batch: [800/1000]	Loss: 0.3823	Accuracy: 86.07 % (85.83 %)	Tain_time: 0.5732
+Train Epoch: 30	Batch: [900/1000]	Loss: 0.3877	Accuracy: 86.08 % (85.83 %)	Tain_time: 0.5725
+Train Epoch: 30	Batch: [1000/1000]	Loss: 0.2945	Accuracy: 86.07 % (89.17 %)	Tain_time: 0.5714
+Validation Epoch: 30			Loss: 1.3345	Accuracy: 45.13 ± 0.36 %
+Elapsed Time: 8.4h/16.9h
+
+Train Epoch: 31	Learning Rate: 0.0060
+Train Epoch: 31	Batch: [100/1000]	Loss: 0.2778	Accuracy: 86.81 % (92.08 %)	Tain_time: 0.5773
+Train Epoch: 31	Batch: [200/1000]	Loss: 0.3905	Accuracy: 86.55 % (86.25 %)	Tain_time: 0.5770
+Train Epoch: 31	Batch: [300/1000]	Loss: 0.4206	Accuracy: 86.54 % (85.42 %)	Tain_time: 0.5763
+Train Epoch: 31	Batch: [400/1000]	Loss: 0.3243	Accuracy: 86.54 % (85.42 %)	Tain_time: 0.5767
+Train Epoch: 31	Batch: [500/1000]	Loss: 0.4157	Accuracy: 86.62 % (83.33 %)	Tain_time: 0.5765
+Train Epoch: 31	Batch: [600/1000]	Loss: 0.3491	Accuracy: 86.70 % (86.25 %)	Tain_time: 0.5765
+Train Epoch: 31	Batch: [700/1000]	Loss: 0.3329	Accuracy: 86.67 % (87.92 %)	Tain_time: 0.5766
+Train Epoch: 31	Batch: [800/1000]	Loss: 0.3450	Accuracy: 86.61 % (87.92 %)	Tain_time: 0.5759
+Train Epoch: 31	Batch: [900/1000]	Loss: 0.4375	Accuracy: 86.52 % (81.67 %)	Tain_time: 0.5742
+Train Epoch: 31	Batch: [1000/1000]	Loss: 0.3743	Accuracy: 86.47 % (84.17 %)	Tain_time: 0.5726
+Validation Epoch: 31			Loss: 1.3489	Accuracy: 43.83 ± 0.37 %
+Elapsed Time: 8.7h/16.9h
+
+Train Epoch: 32	Learning Rate: 0.0060
+Train Epoch: 32	Batch: [100/1000]	Loss: 0.4431	Accuracy: 86.45 % (82.50 %)	Tain_time: 0.5582
+Train Epoch: 32	Batch: [200/1000]	Loss: 0.4180	Accuracy: 86.65 % (84.17 %)	Tain_time: 0.5641
+Train Epoch: 32	Batch: [300/1000]	Loss: 0.3530	Accuracy: 86.87 % (86.67 %)	Tain_time: 0.5657
+Train Epoch: 32	Batch: [400/1000]	Loss: 0.4092	Accuracy: 86.71 % (84.58 %)	Tain_time: 0.5681
+Train Epoch: 32	Batch: [500/1000]	Loss: 0.3702	Accuracy: 86.58 % (83.75 %)	Tain_time: 0.5702
+Train Epoch: 32	Batch: [600/1000]	Loss: 0.3168	Accuracy: 86.58 % (88.33 %)	Tain_time: 0.5712
+Train Epoch: 32	Batch: [700/1000]	Loss: 0.5068	Accuracy: 86.59 % (81.25 %)	Tain_time: 0.5721
+Train Epoch: 32	Batch: [800/1000]	Loss: 0.3423	Accuracy: 86.56 % (88.75 %)	Tain_time: 0.5726
+Train Epoch: 32	Batch: [900/1000]	Loss: 0.3307	Accuracy: 86.61 % (89.17 %)	Tain_time: 0.5737
+Train Epoch: 32	Batch: [1000/1000]	Loss: 0.2771	Accuracy: 86.65 % (91.25 %)	Tain_time: 0.5724
+Validation Epoch: 32			Loss: 1.3794	Accuracy: 45.51 ± 0.38 %
+Elapsed Time: 9.0h/16.9h
+
+Train Epoch: 33	Learning Rate: 0.0060
+Train Epoch: 33	Batch: [100/1000]	Loss: 0.2873	Accuracy: 87.23 % (90.00 %)	Tain_time: 0.5584
+Train Epoch: 33	Batch: [200/1000]	Loss: 0.3935	Accuracy: 87.06 % (82.92 %)	Tain_time: 0.5571
+Train Epoch: 33	Batch: [300/1000]	Loss: 0.3631	Accuracy: 87.00 % (89.17 %)	Tain_time: 0.5602
+Train Epoch: 33	Batch: [400/1000]	Loss: 0.3676	Accuracy: 86.79 % (86.67 %)	Tain_time: 0.5644
+Train Epoch: 33	Batch: [500/1000]	Loss: 0.5534	Accuracy: 86.71 % (80.00 %)	Tain_time: 0.5674
+Train Epoch: 33	Batch: [600/1000]	Loss: 0.3906	Accuracy: 86.58 % (87.08 %)	Tain_time: 0.5697
+Train Epoch: 33	Batch: [700/1000]	Loss: 0.3042	Accuracy: 86.59 % (88.75 %)	Tain_time: 0.5710
+Train Epoch: 33	Batch: [800/1000]	Loss: 0.3326	Accuracy: 86.52 % (87.92 %)	Tain_time: 0.5718
+Train Epoch: 33	Batch: [900/1000]	Loss: 0.3707	Accuracy: 86.56 % (86.67 %)	Tain_time: 0.5723
+Train Epoch: 33	Batch: [1000/1000]	Loss: 0.3719	Accuracy: 86.54 % (85.83 %)	Tain_time: 0.5725
+Validation Epoch: 33			Loss: 1.3867	Accuracy: 44.99 ± 0.39 %
+Elapsed Time: 9.3h/16.8h
+
+Train Epoch: 34	Learning Rate: 0.0060
+Train Epoch: 34	Batch: [100/1000]	Loss: 0.3805	Accuracy: 86.71 % (87.92 %)	Tain_time: 0.5578
+Train Epoch: 34	Batch: [200/1000]	Loss: 0.4883	Accuracy: 86.81 % (82.92 %)	Tain_time: 0.5567
+Train Epoch: 34	Batch: [300/1000]	Loss: 0.4298	Accuracy: 86.72 % (84.17 %)	Tain_time: 0.5562
+Train Epoch: 34	Batch: [400/1000]	Loss: 0.3715	Accuracy: 86.79 % (87.50 %)	Tain_time: 0.5569
+Train Epoch: 34	Batch: [500/1000]	Loss: 0.3037	Accuracy: 86.69 % (89.58 %)	Tain_time: 0.5604
+Train Epoch: 34	Batch: [600/1000]	Loss: 0.4193	Accuracy: 86.66 % (85.42 %)	Tain_time: 0.5627
+Train Epoch: 34	Batch: [700/1000]	Loss: 0.3676	Accuracy: 86.62 % (86.25 %)	Tain_time: 0.5645
+Train Epoch: 34	Batch: [800/1000]	Loss: 0.3105	Accuracy: 86.65 % (88.33 %)	Tain_time: 0.5658
+Train Epoch: 34	Batch: [900/1000]	Loss: 0.4397	Accuracy: 86.67 % (84.17 %)	Tain_time: 0.5674
+Train Epoch: 34	Batch: [1000/1000]	Loss: 0.3725	Accuracy: 86.63 % (86.25 %)	Tain_time: 0.5682
+Validation Epoch: 34			Loss: 1.4051	Accuracy: 42.41 ± 0.36 %
+Elapsed Time: 9.5h/16.8h
+
+Train Epoch: 35	Learning Rate: 0.0060
+Train Epoch: 35	Batch: [100/1000]	Loss: 0.4123	Accuracy: 86.49 % (85.42 %)	Tain_time: 0.5603
+Train Epoch: 35	Batch: [200/1000]	Loss: 0.3439	Accuracy: 86.55 % (86.25 %)	Tain_time: 0.5583
+Train Epoch: 35	Batch: [300/1000]	Loss: 0.2715	Accuracy: 86.59 % (91.67 %)	Tain_time: 0.5582
+Train Epoch: 35	Batch: [400/1000]	Loss: 0.3987	Accuracy: 86.54 % (84.17 %)	Tain_time: 0.5575
+Train Epoch: 35	Batch: [500/1000]	Loss: 0.3463	Accuracy: 86.58 % (88.75 %)	Tain_time: 0.5579
+Train Epoch: 35	Batch: [600/1000]	Loss: 0.2901	Accuracy: 86.61 % (89.58 %)	Tain_time: 0.5612
+Train Epoch: 35	Batch: [700/1000]	Loss: 0.2751	Accuracy: 86.66 % (89.58 %)	Tain_time: 0.5638
+Train Epoch: 35	Batch: [800/1000]	Loss: 0.3678	Accuracy: 86.69 % (85.83 %)	Tain_time: 0.5657
+Train Epoch: 35	Batch: [900/1000]	Loss: 0.3811	Accuracy: 86.72 % (87.92 %)	Tain_time: 0.5670
+Train Epoch: 35	Batch: [1000/1000]	Loss: 0.4901	Accuracy: 86.71 % (81.67 %)	Tain_time: 0.5680
+Validation Epoch: 35			Loss: 1.3390	Accuracy: 45.11 ± 0.38 %
+Elapsed Time: 9.8h/16.9h
+
+Train Epoch: 36	Learning Rate: 0.0060
+Train Epoch: 36	Batch: [100/1000]	Loss: 0.4458	Accuracy: 86.91 % (85.42 %)	Tain_time: 0.5573
+Train Epoch: 36	Batch: [200/1000]	Loss: 0.2608	Accuracy: 86.95 % (90.00 %)	Tain_time: 0.5567
+Train Epoch: 36	Batch: [300/1000]	Loss: 0.3712	Accuracy: 86.82 % (85.00 %)	Tain_time: 0.5570
+Train Epoch: 36	Batch: [400/1000]	Loss: 0.2859	Accuracy: 86.86 % (87.92 %)	Tain_time: 0.5575
+Train Epoch: 36	Batch: [500/1000]	Loss: 0.4125	Accuracy: 86.87 % (86.67 %)	Tain_time: 0.5578
+Train Epoch: 36	Batch: [600/1000]	Loss: 0.2719	Accuracy: 86.87 % (93.33 %)	Tain_time: 0.5581
+Train Epoch: 36	Batch: [700/1000]	Loss: 0.2783	Accuracy: 86.84 % (91.67 %)	Tain_time: 0.5609
+Train Epoch: 36	Batch: [800/1000]	Loss: 0.4673	Accuracy: 86.81 % (82.92 %)	Tain_time: 0.5634
+Train Epoch: 36	Batch: [900/1000]	Loss: 0.3420	Accuracy: 86.81 % (87.92 %)	Tain_time: 0.5650
+Train Epoch: 36	Batch: [1000/1000]	Loss: 0.3976	Accuracy: 86.81 % (86.67 %)	Tain_time: 0.5659
+Validation Epoch: 36			Loss: 1.3711	Accuracy: 44.55 ± 0.37 %
+Elapsed Time: 10.1h/16.9h
+
+Train Epoch: 37	Learning Rate: 0.0060
+Train Epoch: 37	Batch: [100/1000]	Loss: 0.5198	Accuracy: 86.62 % (80.42 %)	Tain_time: 0.5581
+Train Epoch: 37	Batch: [200/1000]	Loss: 0.3399	Accuracy: 86.86 % (87.50 %)	Tain_time: 0.5563
+Train Epoch: 37	Batch: [300/1000]	Loss: 0.4811	Accuracy: 86.75 % (84.58 %)	Tain_time: 0.5565
+Train Epoch: 37	Batch: [400/1000]	Loss: 0.3916	Accuracy: 86.79 % (85.83 %)	Tain_time: 0.5561
+Train Epoch: 37	Batch: [500/1000]	Loss: 0.3126	Accuracy: 86.75 % (87.92 %)	Tain_time: 0.5564
+Train Epoch: 37	Batch: [600/1000]	Loss: 0.4034	Accuracy: 86.76 % (82.92 %)	Tain_time: 0.5565
+Train Epoch: 37	Batch: [700/1000]	Loss: 0.5349	Accuracy: 86.79 % (77.92 %)	Tain_time: 0.5569
+Train Epoch: 37	Batch: [800/1000]	Loss: 0.3731	Accuracy: 86.76 % (84.58 %)	Tain_time: 0.5592
+Train Epoch: 37	Batch: [900/1000]	Loss: 0.4042	Accuracy: 86.76 % (82.08 %)	Tain_time: 0.5612
+Train Epoch: 37	Batch: [1000/1000]	Loss: 0.3082	Accuracy: 86.71 % (88.75 %)	Tain_time: 0.5628
+Validation Epoch: 37			Loss: 1.4091	Accuracy: 41.90 ± 0.36 %
+Elapsed Time: 10.4h/16.9h
+
+Train Epoch: 38	Learning Rate: 0.0060
+Train Epoch: 38	Batch: [100/1000]	Loss: 0.3647	Accuracy: 86.73 % (85.42 %)	Tain_time: 0.5582
+Train Epoch: 38	Batch: [200/1000]	Loss: 0.3157	Accuracy: 86.91 % (91.25 %)	Tain_time: 0.5566
+Train Epoch: 38	Batch: [300/1000]	Loss: 0.4471	Accuracy: 86.87 % (81.67 %)	Tain_time: 0.5567
+Train Epoch: 38	Batch: [400/1000]	Loss: 0.3967	Accuracy: 86.87 % (87.08 %)	Tain_time: 0.5574
+Train Epoch: 38	Batch: [500/1000]	Loss: 0.2870	Accuracy: 86.83 % (90.42 %)	Tain_time: 0.5574
+Train Epoch: 38	Batch: [600/1000]	Loss: 0.3587	Accuracy: 86.85 % (86.25 %)	Tain_time: 0.5578
+Train Epoch: 38	Batch: [700/1000]	Loss: 0.4584	Accuracy: 86.90 % (86.67 %)	Tain_time: 0.5579
+Train Epoch: 38	Batch: [800/1000]	Loss: 0.3359	Accuracy: 86.91 % (86.25 %)	Tain_time: 0.5580
+Train Epoch: 38	Batch: [900/1000]	Loss: 0.2722	Accuracy: 86.91 % (90.42 %)	Tain_time: 0.5600
+Train Epoch: 38	Batch: [1000/1000]	Loss: 0.3742	Accuracy: 86.94 % (89.17 %)	Tain_time: 0.5616
+Validation Epoch: 38			Loss: 1.4340	Accuracy: 40.15 ± 0.34 %
+Elapsed Time: 10.7h/16.9h
+
+Train Epoch: 39	Learning Rate: 0.0060
+Train Epoch: 39	Batch: [100/1000]	Loss: 0.3279	Accuracy: 86.88 % (87.92 %)	Tain_time: 0.5568
+Train Epoch: 39	Batch: [200/1000]	Loss: 0.3555	Accuracy: 87.13 % (86.67 %)	Tain_time: 0.5554
+Train Epoch: 39	Batch: [300/1000]	Loss: 0.3662	Accuracy: 87.14 % (86.25 %)	Tain_time: 0.5556
+Train Epoch: 39	Batch: [400/1000]	Loss: 0.2167	Accuracy: 87.03 % (92.50 %)	Tain_time: 0.5560
+Train Epoch: 39	Batch: [500/1000]	Loss: 0.3964	Accuracy: 87.03 % (84.17 %)	Tain_time: 0.5567
+Train Epoch: 39	Batch: [600/1000]	Loss: 0.3856	Accuracy: 86.98 % (88.33 %)	Tain_time: 0.5570
+Train Epoch: 39	Batch: [700/1000]	Loss: 0.4098	Accuracy: 86.94 % (85.83 %)	Tain_time: 0.5576
+Train Epoch: 39	Batch: [800/1000]	Loss: 0.3817	Accuracy: 87.04 % (85.83 %)	Tain_time: 0.5578
+Train Epoch: 39	Batch: [900/1000]	Loss: 0.3865	Accuracy: 87.03 % (84.17 %)	Tain_time: 0.5584
+Train Epoch: 39	Batch: [1000/1000]	Loss: 0.3621	Accuracy: 87.02 % (87.50 %)	Tain_time: 0.5603
+Validation Epoch: 39			Loss: 1.4246	Accuracy: 43.36 ± 0.35 %
+Elapsed Time: 11.0h/16.9h
+
+Train Epoch: 40	Learning Rate: 0.0012
+Train Epoch: 40	Batch: [100/1000]	Loss: 0.3005	Accuracy: 88.51 % (89.17 %)	Tain_time: 0.5563
+Train Epoch: 40	Batch: [200/1000]	Loss: 0.2996	Accuracy: 88.64 % (90.42 %)	Tain_time: 0.5551
+Train Epoch: 40	Batch: [300/1000]	Loss: 0.3115	Accuracy: 88.71 % (87.50 %)	Tain_time: 0.5547
+Train Epoch: 40	Batch: [400/1000]	Loss: 0.3179	Accuracy: 88.87 % (87.92 %)	Tain_time: 0.5556
+Train Epoch: 40	Batch: [500/1000]	Loss: 0.2811	Accuracy: 88.86 % (91.25 %)	Tain_time: 0.5558
+Train Epoch: 40	Batch: [600/1000]	Loss: 0.2306	Accuracy: 88.98 % (90.83 %)	Tain_time: 0.5563
+Train Epoch: 40	Batch: [700/1000]	Loss: 0.2601	Accuracy: 89.04 % (91.25 %)	Tain_time: 0.5565
+Train Epoch: 40	Batch: [800/1000]	Loss: 0.4186	Accuracy: 89.01 % (83.75 %)	Tain_time: 0.5567
+Train Epoch: 40	Batch: [900/1000]	Loss: 0.3118	Accuracy: 89.03 % (88.33 %)	Tain_time: 0.5570
+Train Epoch: 40	Batch: [1000/1000]	Loss: 0.3746	Accuracy: 89.00 % (85.00 %)	Tain_time: 0.5571
+Validation Epoch: 40			Loss: 1.3194	Accuracy: 45.42 ± 0.39 %
+Elapsed Time: 11.3h/16.9h
+
+Train Epoch: 41	Learning Rate: 0.0012
+Train Epoch: 41	Batch: [100/1000]	Loss: 0.2716	Accuracy: 89.32 % (88.75 %)	Tain_time: 0.5596
+Train Epoch: 41	Batch: [200/1000]	Loss: 0.2989	Accuracy: 89.57 % (90.42 %)	Tain_time: 0.5577
+Train Epoch: 41	Batch: [300/1000]	Loss: 0.3132	Accuracy: 89.54 % (89.17 %)	Tain_time: 0.5573
+Train Epoch: 41	Batch: [400/1000]	Loss: 0.3202	Accuracy: 89.41 % (87.92 %)	Tain_time: 0.5572
+Train Epoch: 41	Batch: [500/1000]	Loss: 0.3310	Accuracy: 89.41 % (87.50 %)	Tain_time: 0.5571
+Train Epoch: 41	Batch: [600/1000]	Loss: 0.2173	Accuracy: 89.43 % (94.17 %)	Tain_time: 0.5577
+Train Epoch: 41	Batch: [700/1000]	Loss: 0.2414	Accuracy: 89.41 % (90.42 %)	Tain_time: 0.5578
+Train Epoch: 41	Batch: [800/1000]	Loss: 0.2864	Accuracy: 89.41 % (87.92 %)	Tain_time: 0.5581
+Train Epoch: 41	Batch: [900/1000]	Loss: 0.3359	Accuracy: 89.44 % (89.17 %)	Tain_time: 0.5583
+Train Epoch: 41	Batch: [1000/1000]	Loss: 0.1904	Accuracy: 89.51 % (91.67 %)	Tain_time: 0.5588
+Validation Epoch: 41			Loss: 1.3827	Accuracy: 43.39 ± 0.36 %
+Elapsed Time: 11.6h/17.0h
+
+Train Epoch: 42	Learning Rate: 0.0012
+Train Epoch: 42	Batch: [100/1000]	Loss: 0.2628	Accuracy: 89.34 % (89.17 %)	Tain_time: 0.5742
+Train Epoch: 42	Batch: [200/1000]	Loss: 0.2925	Accuracy: 89.21 % (90.42 %)	Tain_time: 0.5656
+Train Epoch: 42	Batch: [300/1000]	Loss: 0.3326	Accuracy: 89.44 % (88.75 %)	Tain_time: 0.5622
+Train Epoch: 42	Batch: [400/1000]	Loss: 0.2360	Accuracy: 89.42 % (91.67 %)	Tain_time: 0.5610
+Train Epoch: 42	Batch: [500/1000]	Loss: 0.2667	Accuracy: 89.58 % (90.00 %)	Tain_time: 0.5609
+Train Epoch: 42	Batch: [600/1000]	Loss: 0.3117	Accuracy: 89.51 % (88.33 %)	Tain_time: 0.5607
+Train Epoch: 42	Batch: [700/1000]	Loss: 0.2870	Accuracy: 89.54 % (89.17 %)	Tain_time: 0.5604
+Train Epoch: 42	Batch: [800/1000]	Loss: 0.2274	Accuracy: 89.61 % (92.08 %)	Tain_time: 0.5603
+Train Epoch: 42	Batch: [900/1000]	Loss: 0.2950	Accuracy: 89.60 % (88.33 %)	Tain_time: 0.5604
+Train Epoch: 42	Batch: [1000/1000]	Loss: 0.2735	Accuracy: 89.65 % (89.17 %)	Tain_time: 0.5607
+Validation Epoch: 42			Loss: 1.3619	Accuracy: 45.37 ± 0.38 %
+Elapsed Time: 11.9h/17.0h
+
+Train Epoch: 43	Learning Rate: 0.0012
+Train Epoch: 43	Batch: [100/1000]	Loss: 0.3868	Accuracy: 89.50 % (86.25 %)	Tain_time: 0.5765
+Train Epoch: 43	Batch: [200/1000]	Loss: 0.2979	Accuracy: 89.50 % (89.17 %)	Tain_time: 0.5749
+Train Epoch: 43	Batch: [300/1000]	Loss: 0.2466	Accuracy: 89.55 % (92.50 %)	Tain_time: 0.5692
+Train Epoch: 43	Batch: [400/1000]	Loss: 0.3363	Accuracy: 89.61 % (88.33 %)	Tain_time: 0.5666
+Train Epoch: 43	Batch: [500/1000]	Loss: 0.2715	Accuracy: 89.66 % (89.58 %)	Tain_time: 0.5653
+Train Epoch: 43	Batch: [600/1000]	Loss: 0.2690	Accuracy: 89.69 % (91.25 %)	Tain_time: 0.5647
+Train Epoch: 43	Batch: [700/1000]	Loss: 0.3823	Accuracy: 89.69 % (82.50 %)	Tain_time: 0.5640
+Train Epoch: 43	Batch: [800/1000]	Loss: 0.2852	Accuracy: 89.72 % (89.17 %)	Tain_time: 0.5635
+Train Epoch: 43	Batch: [900/1000]	Loss: 0.2234	Accuracy: 89.74 % (90.42 %)	Tain_time: 0.5635
+Train Epoch: 43	Batch: [1000/1000]	Loss: 0.3012	Accuracy: 89.71 % (90.00 %)	Tain_time: 0.5635
+Validation Epoch: 43			Loss: 1.3546	Accuracy: 43.67 ± 0.37 %
+Elapsed Time: 12.2h/17.0h
+
+Train Epoch: 44	Learning Rate: 0.0012
+Train Epoch: 44	Batch: [100/1000]	Loss: 0.3543	Accuracy: 89.35 % (87.92 %)	Tain_time: 0.5774
+Train Epoch: 44	Batch: [200/1000]	Loss: 0.3161	Accuracy: 89.35 % (89.17 %)	Tain_time: 0.5750
+Train Epoch: 44	Batch: [300/1000]	Loss: 0.2358	Accuracy: 89.48 % (92.92 %)	Tain_time: 0.5749
+Train Epoch: 44	Batch: [400/1000]	Loss: 0.3108	Accuracy: 89.46 % (88.75 %)	Tain_time: 0.5712
+Train Epoch: 44	Batch: [500/1000]	Loss: 0.3080	Accuracy: 89.55 % (89.17 %)	Tain_time: 0.5691
+Train Epoch: 44	Batch: [600/1000]	Loss: 0.2888	Accuracy: 89.53 % (90.00 %)	Tain_time: 0.5675
+Train Epoch: 44	Batch: [700/1000]	Loss: 0.3712	Accuracy: 89.63 % (89.17 %)	Tain_time: 0.5666
+Train Epoch: 44	Batch: [800/1000]	Loss: 0.2829	Accuracy: 89.59 % (91.25 %)	Tain_time: 0.5662
+Train Epoch: 44	Batch: [900/1000]	Loss: 0.2779	Accuracy: 89.61 % (90.42 %)	Tain_time: 0.5663
+Train Epoch: 44	Batch: [1000/1000]	Loss: 0.3055	Accuracy: 89.61 % (89.58 %)	Tain_time: 0.5663
+Validation Epoch: 44			Loss: 1.3617	Accuracy: 42.92 ± 0.37 %
+Elapsed Time: 12.5h/17.0h
+
+Train Epoch: 45	Learning Rate: 0.0012
+Train Epoch: 45	Batch: [100/1000]	Loss: 0.2694	Accuracy: 90.22 % (92.08 %)	Tain_time: 0.5751
+Train Epoch: 45	Batch: [200/1000]	Loss: 0.3077	Accuracy: 89.86 % (89.17 %)	Tain_time: 0.5751
+Train Epoch: 45	Batch: [300/1000]	Loss: 0.2520	Accuracy: 89.82 % (92.08 %)	Tain_time: 0.5752
+Train Epoch: 45	Batch: [400/1000]	Loss: 0.4082	Accuracy: 89.77 % (84.58 %)	Tain_time: 0.5753
+Train Epoch: 45	Batch: [500/1000]	Loss: 0.2222	Accuracy: 89.86 % (93.33 %)	Tain_time: 0.5722
+Train Epoch: 45	Batch: [600/1000]	Loss: 0.2162	Accuracy: 89.94 % (92.92 %)	Tain_time: 0.5699
+Train Epoch: 45	Batch: [700/1000]	Loss: 0.2061	Accuracy: 89.96 % (92.50 %)	Tain_time: 0.5687
+Train Epoch: 45	Batch: [800/1000]	Loss: 0.3119	Accuracy: 89.92 % (87.08 %)	Tain_time: 0.5684
+Train Epoch: 45	Batch: [900/1000]	Loss: 0.2420	Accuracy: 89.92 % (91.67 %)	Tain_time: 0.5678
+Train Epoch: 45	Batch: [1000/1000]	Loss: 0.2476	Accuracy: 89.94 % (91.25 %)	Tain_time: 0.5671
+Validation Epoch: 45			Loss: 1.3512	Accuracy: 45.25 ± 0.37 %
+Elapsed Time: 12.7h/17.0h
+
+Train Epoch: 46	Learning Rate: 0.0012
+Train Epoch: 46	Batch: [100/1000]	Loss: 0.3138	Accuracy: 89.15 % (90.00 %)	Tain_time: 0.5782
+Train Epoch: 46	Batch: [200/1000]	Loss: 0.3435	Accuracy: 89.41 % (87.92 %)	Tain_time: 0.5769
+Train Epoch: 46	Batch: [300/1000]	Loss: 0.1949	Accuracy: 89.56 % (94.58 %)	Tain_time: 0.5766
+Train Epoch: 46	Batch: [400/1000]	Loss: 0.3045	Accuracy: 89.70 % (88.75 %)	Tain_time: 0.5765
+Train Epoch: 46	Batch: [500/1000]	Loss: 0.2961	Accuracy: 89.75 % (90.83 %)	Tain_time: 0.5759
+Train Epoch: 46	Batch: [600/1000]	Loss: 0.3745	Accuracy: 89.76 % (87.92 %)	Tain_time: 0.5732
+Train Epoch: 46	Batch: [700/1000]	Loss: 0.3411	Accuracy: 89.80 % (87.50 %)	Tain_time: 0.5712
+Train Epoch: 46	Batch: [800/1000]	Loss: 0.1908	Accuracy: 89.85 % (94.17 %)	Tain_time: 0.5696
+Train Epoch: 46	Batch: [900/1000]	Loss: 0.2627	Accuracy: 89.80 % (90.00 %)	Tain_time: 0.5683
+Train Epoch: 46	Batch: [1000/1000]	Loss: 0.2442	Accuracy: 89.80 % (90.00 %)	Tain_time: 0.5674
+Validation Epoch: 46			Loss: 1.3729	Accuracy: 43.70 ± 0.37 %
+Elapsed Time: 13.0h/17.0h
+
+Train Epoch: 47	Learning Rate: 0.0012
+Train Epoch: 47	Batch: [100/1000]	Loss: 0.1988	Accuracy: 90.11 % (93.75 %)	Tain_time: 0.5746
+Train Epoch: 47	Batch: [200/1000]	Loss: 0.2940	Accuracy: 89.89 % (86.67 %)	Tain_time: 0.5731
+Train Epoch: 47	Batch: [300/1000]	Loss: 0.3242	Accuracy: 89.88 % (85.42 %)	Tain_time: 0.5734
+Train Epoch: 47	Batch: [400/1000]	Loss: 0.3075	Accuracy: 89.85 % (87.50 %)	Tain_time: 0.5735
+Train Epoch: 47	Batch: [500/1000]	Loss: 0.3180	Accuracy: 89.89 % (88.75 %)	Tain_time: 0.5737
+Train Epoch: 47	Batch: [600/1000]	Loss: 0.3624	Accuracy: 89.91 % (86.25 %)	Tain_time: 0.5744
+Train Epoch: 47	Batch: [700/1000]	Loss: 0.2955	Accuracy: 89.88 % (90.42 %)	Tain_time: 0.5729
+Train Epoch: 47	Batch: [800/1000]	Loss: 0.2502	Accuracy: 89.88 % (90.00 %)	Tain_time: 0.5713
+Train Epoch: 47	Batch: [900/1000]	Loss: 0.4191	Accuracy: 89.89 % (85.00 %)	Tain_time: 0.5701
+Train Epoch: 47	Batch: [1000/1000]	Loss: 0.3529	Accuracy: 89.92 % (87.08 %)	Tain_time: 0.5691
+Validation Epoch: 47			Loss: 1.3631	Accuracy: 43.77 ± 0.36 %
+Elapsed Time: 13.3h/17.0h
+
+Train Epoch: 48	Learning Rate: 0.0012
+Train Epoch: 48	Batch: [100/1000]	Loss: 0.2515	Accuracy: 90.34 % (89.17 %)	Tain_time: 0.5777
+Train Epoch: 48	Batch: [200/1000]	Loss: 0.2632	Accuracy: 90.14 % (89.17 %)	Tain_time: 0.5759
+Train Epoch: 48	Batch: [300/1000]	Loss: 0.3438	Accuracy: 90.28 % (87.08 %)	Tain_time: 0.5749
+Train Epoch: 48	Batch: [400/1000]	Loss: 0.3858	Accuracy: 90.03 % (87.50 %)	Tain_time: 0.5756
+Train Epoch: 48	Batch: [500/1000]	Loss: 0.2627	Accuracy: 90.01 % (89.58 %)	Tain_time: 0.5759
+Train Epoch: 48	Batch: [600/1000]	Loss: 0.2550	Accuracy: 90.02 % (90.00 %)	Tain_time: 0.5765
+Train Epoch: 48	Batch: [700/1000]	Loss: 0.3477	Accuracy: 90.02 % (87.92 %)	Tain_time: 0.5767
+Train Epoch: 48	Batch: [800/1000]	Loss: 0.3480	Accuracy: 89.98 % (85.42 %)	Tain_time: 0.5763
+Train Epoch: 48	Batch: [900/1000]	Loss: 0.2610	Accuracy: 89.94 % (88.75 %)	Tain_time: 0.5745
+Train Epoch: 48	Batch: [1000/1000]	Loss: 0.2555	Accuracy: 89.94 % (92.08 %)	Tain_time: 0.5733
+Validation Epoch: 48			Loss: 1.5236	Accuracy: 42.42 ± 0.36 %
+Elapsed Time: 13.6h/17.0h
+
+Train Epoch: 49	Learning Rate: 0.0012
+Train Epoch: 49	Batch: [100/1000]	Loss: 0.1941	Accuracy: 89.89 % (93.33 %)	Tain_time: 0.5578
+Train Epoch: 49	Batch: [200/1000]	Loss: 0.4395	Accuracy: 89.90 % (81.67 %)	Tain_time: 0.5647
+Train Epoch: 49	Batch: [300/1000]	Loss: 0.2952	Accuracy: 90.09 % (88.75 %)	Tain_time: 0.5686
+Train Epoch: 49	Batch: [400/1000]	Loss: 0.2133	Accuracy: 90.10 % (92.92 %)	Tain_time: 0.5701
+Train Epoch: 49	Batch: [500/1000]	Loss: 0.2818	Accuracy: 90.08 % (91.25 %)	Tain_time: 0.5719
+Train Epoch: 49	Batch: [600/1000]	Loss: 0.2676	Accuracy: 90.02 % (88.75 %)	Tain_time: 0.5727
+Train Epoch: 49	Batch: [700/1000]	Loss: 0.1734	Accuracy: 90.03 % (94.17 %)	Tain_time: 0.5739
+Train Epoch: 49	Batch: [800/1000]	Loss: 0.3486	Accuracy: 89.99 % (87.08 %)	Tain_time: 0.5743
+Train Epoch: 49	Batch: [900/1000]	Loss: 0.1800	Accuracy: 89.96 % (94.17 %)	Tain_time: 0.5746
+Train Epoch: 49	Batch: [1000/1000]	Loss: 0.1375	Accuracy: 89.96 % (94.17 %)	Tain_time: 0.5734
+Validation Epoch: 49			Loss: 1.4209	Accuracy: 42.61 ± 0.37 %
+Elapsed Time: 13.8h/17.0h
+
+Train Epoch: 50	Learning Rate: 0.0002
+Train Epoch: 50	Batch: [100/1000]	Loss: 0.3191	Accuracy: 89.85 % (87.08 %)	Tain_time: 0.5614
+Train Epoch: 50	Batch: [200/1000]	Loss: 0.2629	Accuracy: 90.08 % (90.00 %)	Tain_time: 0.5589
+Train Epoch: 50	Batch: [300/1000]	Loss: 0.2299	Accuracy: 90.18 % (91.67 %)	Tain_time: 0.5624
+Train Epoch: 50	Batch: [400/1000]	Loss: 0.3415	Accuracy: 90.26 % (87.08 %)	Tain_time: 0.5666
+Train Epoch: 50	Batch: [500/1000]	Loss: 0.1912	Accuracy: 90.32 % (93.75 %)	Tain_time: 0.5688

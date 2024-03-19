@@ -1,0 +1,1259 @@
+/data4/zhangxiao/multi_scale_ODE/cifar100_coupling/ode_cifar100_coupling.py
+import os
+import argparse
+import logging
+import time
+import numpy as np
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+import torchvision.datasets as datasets
+import torchvision.transforms as transforms
+import torch.nn.functional as F
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--network', type=str, choices=['resnet', 'odenet'], default='odenet')
+parser.add_argument('--tol', type=float, default=1e-3)
+parser.add_argument('--adjoint', type=eval, default=False, choices=[True, False])
+parser.add_argument('--downsampling-method', type=str, default='conv', choices=['conv', 'res'])
+parser.add_argument('--nepochs', type=int, default=160)
+parser.add_argument('--data_aug', type=eval, default=True, choices=[True, False])
+parser.add_argument('--lr', type=float, default=0.1)
+parser.add_argument('--batch_size', type=int, default=128)
+parser.add_argument('--test_batch_size', type=int, default=128)
+
+parser.add_argument('--debug', action='store_true')
+parser.add_argument('--gpu', type=int, default=0)
+parser.add_argument('--method', type = str, choices=['euler', 'midpoint','dopri5','adaptive_heun'], default = 'euler')
+parser.add_argument('--seed', type = int, default = 0)
+parser.add_argument('--func', type=str, choices=['odetem','coupling','coupling2','temfunc'], default='odetem')
+parser.add_argument('--num_block', type = int, default = 3)
+parser.add_argument('--step_size', type=float, default=0.05)
+parser.add_argument('--depth', type=float, default=1.0)
+parser.add_argument('--hidden_dim', type=int, default=1000)
+parser.add_argument('--coupling', type=int, default=2)
+parser.add_argument('--coupling_func', type=int, default=2)
+parser.add_argument('--coupling_alpha', type=int, default=1)
+parser.add_argument('--func_size', type=float, default=1.0)
+parser.add_argument('--alpha_size', type=float, default=1.0)
+
+
+args = parser.parse_args()
+
+import random
+random.seed(args.seed)
+np.random.seed(args.seed)
+torch.manual_seed(args.seed)
+torch.cuda.manual_seed_all(args.seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
+if args.adjoint:
+    from torchdiffeq import odeint_adjoint as odeint
+else:
+    from torchdiffeq import odeint
+
+
+def conv3x3(in_planes, out_planes, stride=1):
+    """3x3 convolution with padding"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
+
+
+def conv1x1(in_planes, out_planes, stride=1):
+    """1x1 convolution"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+
+
+def norm(dim):
+    return nn.GroupNorm(min(32, dim), dim)
+
+
+class ResBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
+        super(ResBlock, self).__init__()
+        self.norm1 = norm(inplanes)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.conv1 = conv3x3(inplanes, planes, stride)
+        self.norm2 = norm(planes)
+        self.conv2 = conv3x3(planes, planes)
+
+    def forward(self, x):
+        shortcut = x
+
+        out = self.relu(self.norm1(x))
+
+        if self.downsample is not None:
+            shortcut = self.downsample(out)
+
+        out = self.conv1(out)
+        out = self.norm2(out)
+        out = self.relu(out)
+        out = self.conv2(out)
+
+        return out + shortcut
+
+
+class ConcatConv2d(nn.Module):
+
+    def __init__(self, dim_in, dim_out, ksize=3, stride=1, padding=0, dilation=1, groups=1, bias=True, transpose=False):
+        super(ConcatConv2d, self).__init__()
+        module = nn.ConvTranspose2d if transpose else nn.Conv2d
+        self._layer = module(
+            dim_in + 1, dim_out, kernel_size=ksize, stride=stride, padding=padding, dilation=dilation, groups=groups,
+            bias=bias
+        )
+
+    def forward(self, t, x):
+        tt = torch.ones_like(x[:, :1, :, :]) * t
+        ttx = torch.cat([tt, x], 1)
+        return self._layer(ttx)
+
+
+class ODEfunc(nn.Module):
+
+    def __init__(self, dim, kernel_size):
+        super(ODEfunc, self).__init__()
+        self.norm1 = norm(dim)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = ConcatConv2d(dim, dim, kernel_size, 1, (kernel_size//2))
+        self.norm2 = norm(dim)
+        self.conv2 = ConcatConv2d(dim, dim, kernel_size, 1, (kernel_size//2))
+        self.norm3 = norm(dim)
+        self.nfe = 0
+
+    def forward(self, t, x):
+        self.nfe += 1
+        out = self.norm1(x)
+        out = self.relu(out)
+        out = self.conv1(t, out)
+        out = self.norm2(out)
+        out = self.relu(out)
+        out = self.conv2(t, out)
+        out = self.norm3(out)
+        return out
+
+
+class ODEBlock(nn.Module):
+
+    def __init__(self, odefunc):
+        super(ODEBlock, self).__init__()
+        self.odefunc = odefunc
+        self.integration_time = torch.tensor([0, 1]).float()
+
+    def forward(self, x):
+        self.integration_time = self.integration_time.type_as(x)
+        out = odeint(self.odefunc, x, self.integration_time, rtol=args.tol, atol=args.tol)
+        return out[1]
+
+    @property
+    def nfe(self):
+        return self.odefunc.nfe
+
+    @nfe.setter
+    def nfe(self, value):
+        self.odefunc.nfe = value
+
+##############################kernel_size=1,3,5,7,9 结合TEM,异步耦合###################
+class ODEBlock_coupling(nn.Module):
+
+    def __init__(self, dim):
+        super(ODEBlock_coupling, self).__init__()
+        self.odefunc = nn.ModuleList([ODEfunc(dim, 3).to(device),ODEfunc(dim, 5).to(device),ODEfunc(dim, 7).to(device)])
+        self.alphafc = nn.Sequential(nn.Linear(args.num_block, args.hidden_dim), nn.Tanh(), nn.Linear(args.hidden_dim, args.num_block))
+
+    def forward(self, x):
+        num_step = int(args.depth/args.step_size)
+        out = x; t = 0.0
+        alpha = torch.ones(args.num_block).to(device) / args.num_block
+        for i in range(num_step):
+            dhdt = 0
+            weight = F.softmax(alpha, dim=-1)
+            if i % args.coupling_func == 0:
+                for j in range(args.num_block):
+                    dhdt = dhdt + self.odefunc[j](t,out) * weight[j]
+                out = out + dhdt * args.step_size * args.func_size
+            if i % args.coupling_alpha == 0:
+                alpha = alpha + self.alphafc(alpha.unsqueeze(0)).squeeze() * args.step_size  * args.alpha_size
+            t = t + args.step_size
+        return out
+##############################kernel_size=1,3,5,7,9 结合TEM,异步耦合    2    ###################
+class ODEBlock_coupling2(nn.Module):
+
+    def __init__(self, dim):
+        super(ODEBlock_coupling2, self).__init__()
+        self.odefunc = nn.ModuleList([ODEfunc(dim, 3).to(device),ODEfunc(dim, 5).to(device)])#,ODEfunc(dim, 7).to(device)
+        self.alphafc = nn.Sequential(nn.Linear(args.num_block, args.hidden_dim), nn.Tanh(), nn.Linear(args.hidden_dim, args.num_block))
+
+    def forward(self, x):
+        num_step = int(args.depth/args.step_size)
+        out = x; t = 0.0
+        alpha = torch.ones(args.num_block).to(device) / args.num_block
+        for i in range(num_step):
+            dhdt = 0
+            weight = F.softmax(alpha, dim=-1)
+            if i % args.coupling_func == 0:
+                for j in range(args.num_block):
+                    dhdt = dhdt + self.odefunc[j](t,out) * weight[j]
+                out = out + dhdt * args.step_size * args.func_size
+            if i % args.coupling_alpha == 0:
+                alpha = alpha + self.alphafc(alpha.unsqueeze(0)).squeeze() * args.step_size  * args.alpha_size
+            t = t + args.step_size
+        return out
+##############################kernel_size=1,3,5,7,9 结合TEM,异步耦合###################
+class ODEBlock_tem_func(nn.Module):
+
+    def __init__(self, dim):
+        super(ODEBlock_tem_func, self).__init__()
+        self.odefunc = nn.ModuleList([ODEfunc(dim, 3).to(device), ODEfunc(dim, 5).to(device), ODEfunc(dim, 7).to(device)])
+        self.alphafc = nn.Sequential(nn.Linear(args.num_block, args.hidden_dim), nn.Tanh(), nn.Linear(args.hidden_dim, args.num_block))
+
+    def forward(self, x):
+        num_step = int(args.depth/args.step_size)
+        out = x; t = 0.0
+        alpha = torch.ones(args.num_block).to(device) / args.num_block
+        for i in range(num_step):
+            dhdt = 0
+            weight = F.softmax(alpha, dim=-1)
+            if i % args.coupling == 0:
+                for j in range(args.num_block):
+                    dhdt = dhdt + self.odefunc[j](t,out) * weight[j]
+                out = out + dhdt * args.step_size * 2
+            alpha = alpha + self.alphafc(alpha.unsqueeze(0)).squeeze() * args.step_size
+            t = t + args.step_size
+        return out
+
+##############################TEM###################
+class ODEBlock(nn.Module):
+
+    def __init__(self, dim):
+        super(ODEBlock, self).__init__()
+        self.odefunc = nn.ModuleList([ODEfunc(dim,3).to(device) for _ in range(args.num_block)])
+        self.alphafc = nn.Sequential(nn.Linear(args.num_block, args.hidden_dim), nn.Tanh(), nn.Linear(args.hidden_dim, args.num_block))
+
+    def forward(self, x):
+        num_step = int(args.depth/args.step_size)
+        out = x; t = 0.0
+        alpha = torch.ones(args.num_block).to(device) / args.num_block
+        for i in range(num_step):
+            dhdt = 0
+            weight = F.softmax(alpha, dim=-1)
+            if i % args.coupling_func == 0:
+                for j in range(args.num_block):
+                    dhdt = dhdt + self.odefunc[j](t,out) * weight[j]
+                out = out + dhdt * args.step_size * args.func_size
+            if i % args.coupling_alpha == 0:
+                alpha = alpha + self.alphafc(alpha.unsqueeze(0)).squeeze() * args.step_size  * args.alpha_size
+            t = t + args.step_size
+        return out
+
+class Flatten(nn.Module):
+
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def forward(self, x):
+        shape = torch.prod(torch.tensor(x.shape[1:])).item()
+        return x.view(-1, shape)
+
+
+class RunningAverageMeter(object):
+    """Computes and stores the average and current value"""
+
+    def __init__(self, momentum=0.99):
+        self.momentum = momentum
+        self.reset()
+
+    def reset(self):
+        self.val = None
+        self.avg = 0
+
+    def update(self, val):
+        if self.val is None:
+            self.avg = val
+        else:
+            self.avg = self.avg * self.momentum + val * (1 - self.momentum)
+        self.val = val
+
+def get_cifar100_loaders(data_aug=False, batch_size=128, test_batch_size=128, perc=1.0):
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+    if data_aug:
+        transform_train = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(32, padding=4),
+            transforms.ToTensor(),
+            normalize,
+        ])
+    else:
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            normalize,
+        ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+            normalize,
+    ])
+
+    train_loader = DataLoader(
+        datasets.CIFAR100(root='/data1/XIAO_XIAO/NODE/example-y0-noise/data', train=True, download=True, transform=transform_train), batch_size=batch_size,
+        shuffle=True, num_workers=2, drop_last=True
+    )
+
+    test_loader = DataLoader(
+        datasets.CIFAR100(root='/data1/XIAO_XIAO/NODE/example-y0-noise/data', train=False, download=True, transform=transform_test),
+        batch_size=test_batch_size, shuffle=False, num_workers=2, drop_last=True
+    )
+
+    return train_loader, test_loader, None
+
+
+def inf_generator(iterable):
+    """Allows training with DataLoaders in a single infinite loop:
+        for i, (x, y) in enumerate(inf_generator(train_loader)):
+    """
+    iterator = iterable.__iter__()
+    while True:
+        try:
+            yield iterator.__next__()
+        except StopIteration:
+            iterator = iterable.__iter__()
+
+
+def learning_rate_with_decay(batch_size, batch_denom, batches_per_epoch, boundary_epochs, decay_rates):
+    initial_learning_rate = args.lr * batch_size / batch_denom
+
+    boundaries = [int(batches_per_epoch * epoch) for epoch in boundary_epochs]
+    vals = [initial_learning_rate * decay for decay in decay_rates]
+
+    def learning_rate_fn(itr):
+        lt = [itr < b for b in boundaries] + [True]
+        i = np.argmax(lt)
+        return vals[i]
+
+    return learning_rate_fn
+
+
+def one_hot(x, K):
+    return np.array(x[:, None] == np.arange(K)[None, :], dtype=int)
+
+def accuracy(model, dataset_loader):
+    correct_1 = 0.0
+    correct_5 = 0.0
+    for x, y in dataset_loader:
+        x = x.to(device)
+        y = y.to(device)
+
+        output = model(x)
+
+        _, pred = output.topk(5, 1, largest=True, sorted=True)
+        label = y.view(y.size(0), -1).expand_as(pred)
+        correct = pred.eq(label).float()
+        ####compute top1
+        correct_1 += correct[:,:1].sum()
+        ####compute top5
+        correct_5 += correct[:,:5].sum()
+
+    return correct_1 / len(dataset_loader.dataset), correct_5 / len(dataset_loader.dataset)
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+def makedirs(dirname):  # 判断是否需要创建文件夹,存在则跳过
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+
+def get_logger(logpath, filepath, package_files=[], displaying=True, saving=True, debug=False):
+    logger = logging.getLogger()
+    if debug:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+    logger.setLevel(level)
+    if saving:
+        info_file_handler = logging.FileHandler(logpath, mode="a")
+        info_file_handler.setLevel(level)
+        logger.addHandler(info_file_handler)
+    if displaying:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(level)
+        logger.addHandler(console_handler)
+    logger.info(filepath)
+    with open(filepath, "r") as f:
+        logger.info(f.read())
+
+    for f in package_files:
+        logger.info(f)
+        with open(f, "r") as package_f:
+            logger.info(package_f.read())
+
+    return logger
+from thop import profile
+
+if __name__ == '__main__':
+
+    path_seed = './result_c100_{}_{}_{}_num_block={}_func_size={}_alpha_size={}_coupling_func={}_coupling_alpha={}'.format(args.method, args.network, args.func, args.num_block, args.func_size,  args.alpha_size, args.coupling_func, args.coupling_alpha)
+    if not os.path.isdir(path_seed):
+        os.makedirs(path_seed)
+    makedirs(path_seed)
+    logger = get_logger(logpath=os.path.join(path_seed, 'logs_{}'.format(args.seed)), filepath=os.path.abspath(__file__))
+    logger.info(args)
+
+    device = torch.device('cuda:' + str(args.gpu) if torch.cuda.is_available() else 'cpu')
+
+    is_odenet = args.network == 'odenet'
+
+    if args.downsampling_method == 'conv':
+        downsampling_layers = [
+            nn.Conv2d(3, 64, 3, 1),
+            norm(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, 4, 2, 1),
+            norm(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, 4, 2, 1),
+        ]
+    elif args.downsampling_method == 'res':
+        downsampling_layers = [
+            nn.Conv2d(3, 64, 3, 1),
+            ResBlock(64, 64, stride=2, downsample=conv1x1(64, 64, 2)),
+            ResBlock(64, 64, stride=2, downsample=conv1x1(64, 64, 2)),
+        ]
+    
+    if args.func == 'odetem':
+        feature_layers = [ODEBlock(64)] if is_odenet else [ResBlock(64, 64) for _ in range(6)]
+    if args.func == 'coupling':
+        feature_layers = [ODEBlock_coupling(64)] if is_odenet else [ResBlock(64, 64) for _ in range(6)]
+    if args.func == 'coupling2':
+        feature_layers = [ODEBlock_coupling2(64)] if is_odenet else [ResBlock(64, 64) for _ in range(6)]
+    if args.func == 'temfunc':
+        feature_layers = [ODEBlock_tem_func(64)] if is_odenet else [ResBlock(64, 64) for _ in range(6)]
+    fc_layers = [norm(64), nn.ReLU(inplace=True), nn.AdaptiveAvgPool2d((1, 1)), Flatten(), nn.Linear(64, 100)]
+
+    model = nn.Sequential(*downsampling_layers, *feature_layers, *fc_layers).to(device)
+    x = torch.randn(1, 3, 28, 28).to(device)
+    flops, params = profile(model, inputs=(x,))
+    print('flops  of ODE is %.2fG' % (flops/1e9))
+    logger.info(model)
+    logger.info('Number of parameters: {}'.format(count_parameters(model)))
+
+    criterion = nn.CrossEntropyLoss().to(device)
+
+    train_loader, test_loader, train_eval_loader = get_cifar100_loaders(
+        args.data_aug, args.batch_size, args.test_batch_size
+    )
+
+    data_gen = inf_generator(train_loader)
+    batches_per_epoch = len(train_loader)
+
+    lr_fn = learning_rate_with_decay(
+        args.batch_size, batch_denom=128, batches_per_epoch=batches_per_epoch, boundary_epochs=[60, 100, 140],
+        decay_rates=[1, 0.1, 0.01, 0.001]
+    )
+
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
+
+    best_acc = 0
+    batch_time_meter = RunningAverageMeter()
+    inference_time_meter = RunningAverageMeter()
+    f_nfe_meter = RunningAverageMeter()
+    b_nfe_meter = RunningAverageMeter()
+    end = time.time()
+
+    for itr in range(args.nepochs * batches_per_epoch):
+
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr_fn(itr)
+
+        optimizer.zero_grad()
+        x, y = data_gen.__next__()
+        x = x.to(device)
+        y = y.to(device)
+        logits = model(x)
+        loss = criterion(logits, y)
+
+        loss.backward()
+        optimizer.step()
+
+        batch_time_meter.update(time.time() - end)
+        end = time.time()
+
+        if itr % batches_per_epoch == 0:
+            with torch.no_grad():
+                train_acc1, train_acc5 = accuracy(model, train_loader)
+                inference_end = time.time()
+                val_acc1, val_acc5 = accuracy(model, test_loader)
+                inference_time_meter.update(time.time() - inference_end)
+                if val_acc1 > best_acc:
+                    torch.save({'state_dict': model.state_dict(), 'args': args}, os.path.join(path_seed, 'model_{}.pth'.format(args.seed)))
+                    best_acc = val_acc1
+                logger.info(
+                    "Epoch {:04d} | " "Train_1 Acc {:.4f} | Train_5 Acc {:.4f} | Test_1 Acc {:.4f} | Test_5 Acc {:.4f} |Train Time {:.3f} ({:.3f}) |Test Time {:.3f} ({:.3f})".format(
+                        itr // batches_per_epoch, train_acc1, train_acc5, val_acc1, val_acc5, batch_time_meter.val, batch_time_meter.avg, inference_time_meter.val, inference_time_meter.avg
+                    )
+                )
+
+Namespace(adjoint=False, alpha_size=1.0, batch_size=128, coupling=2, coupling_alpha=1, coupling_func=4, data_aug=True, debug=False, depth=1.0, downsampling_method='conv', func='coupling2', func_size=1.0, gpu=0, hidden_dim=1000, lr=0.1, method='euler', nepochs=160, network='odenet', num_block=2, seed=3, step_size=0.05, test_batch_size=128, tol=0.001)
+Sequential(
+  (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1))
+  (1): GroupNorm(32, 64, eps=1e-05, affine=True)
+  (2): ReLU(inplace=True)
+  (3): Conv2d(64, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+  (4): GroupNorm(32, 64, eps=1e-05, affine=True)
+  (5): ReLU(inplace=True)
+  (6): Conv2d(64, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+  (7): ODEBlock_coupling2(
+    (odefunc): ModuleList(
+      (0): ODEfunc(
+        (norm1): GroupNorm(32, 64, eps=1e-05, affine=True)
+        (relu): ReLU(inplace=True)
+        (conv1): ConcatConv2d(
+          (_layer): Conv2d(65, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (norm2): GroupNorm(32, 64, eps=1e-05, affine=True)
+        (conv2): ConcatConv2d(
+          (_layer): Conv2d(65, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (norm3): GroupNorm(32, 64, eps=1e-05, affine=True)
+      )
+      (1): ODEfunc(
+        (norm1): GroupNorm(32, 64, eps=1e-05, affine=True)
+        (relu): ReLU(inplace=True)
+        (conv1): ConcatConv2d(
+          (_layer): Conv2d(65, 64, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+        )
+        (norm2): GroupNorm(32, 64, eps=1e-05, affine=True)
+        (conv2): ConcatConv2d(
+          (_layer): Conv2d(65, 64, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+        )
+        (norm3): GroupNorm(32, 64, eps=1e-05, affine=True)
+      )
+    )
+    (alphafc): Sequential(
+      (0): Linear(in_features=2, out_features=1000, bias=True)
+      (1): Tanh()
+      (2): Linear(in_features=1000, out_features=2, bias=True)
+    )
+  )
+  (8): GroupNorm(32, 64, eps=1e-05, affine=True)
+  (9): ReLU(inplace=True)
+  (10): AdaptiveAvgPool2d(output_size=(1, 1))
+  (11): Flatten()
+  (12): Linear(in_features=64, out_features=100, bias=True)
+)
+Number of parameters: 428782
+Epoch 0000 | Train_1 Acc 0.0071 | Train_5 Acc 0.0505 | Test_1 Acc 0.0075 | Test_5 Acc 0.0493 |Train Time 0.334 (0.334) |Test Time 2.021 (2.021)
+/data4/zhangxiao/multi_scale_ODE/cifar100_coupling/ode_cifar100_coupling.py
+import os
+import argparse
+import logging
+import time
+import numpy as np
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+import torchvision.datasets as datasets
+import torchvision.transforms as transforms
+import torch.nn.functional as F
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--network', type=str, choices=['resnet', 'odenet'], default='odenet')
+parser.add_argument('--tol', type=float, default=1e-3)
+parser.add_argument('--adjoint', type=eval, default=False, choices=[True, False])
+parser.add_argument('--downsampling-method', type=str, default='conv', choices=['conv', 'res'])
+parser.add_argument('--nepochs', type=int, default=160)
+parser.add_argument('--data_aug', type=eval, default=True, choices=[True, False])
+parser.add_argument('--lr', type=float, default=0.1)
+parser.add_argument('--batch_size', type=int, default=128)
+parser.add_argument('--test_batch_size', type=int, default=128)
+
+parser.add_argument('--debug', action='store_true')
+parser.add_argument('--gpu', type=int, default=0)
+parser.add_argument('--method', type = str, choices=['euler', 'midpoint','dopri5','adaptive_heun'], default = 'euler')
+parser.add_argument('--seed', type = int, default = 0)
+parser.add_argument('--func', type=str, choices=['odetem','coupling','coupling2','temfunc'], default='odetem')
+parser.add_argument('--num_block', type = int, default = 3)
+parser.add_argument('--step_size', type=float, default=0.05)
+parser.add_argument('--depth', type=float, default=1.0)
+parser.add_argument('--hidden_dim', type=int, default=1000)
+parser.add_argument('--coupling', type=int, default=2)
+parser.add_argument('--coupling_func', type=int, default=2)
+parser.add_argument('--coupling_alpha', type=int, default=1)
+parser.add_argument('--func_size', type=float, default=1.0)
+parser.add_argument('--alpha_size', type=float, default=1.0)
+
+
+args = parser.parse_args()
+
+import random
+random.seed(args.seed)
+np.random.seed(args.seed)
+torch.manual_seed(args.seed)
+torch.cuda.manual_seed_all(args.seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
+if args.adjoint:
+    from torchdiffeq import odeint_adjoint as odeint
+else:
+    from torchdiffeq import odeint
+
+
+def conv3x3(in_planes, out_planes, stride=1):
+    """3x3 convolution with padding"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
+
+
+def conv1x1(in_planes, out_planes, stride=1):
+    """1x1 convolution"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+
+
+def norm(dim):
+    return nn.GroupNorm(min(32, dim), dim)
+
+
+class ResBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
+        super(ResBlock, self).__init__()
+        self.norm1 = norm(inplanes)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.conv1 = conv3x3(inplanes, planes, stride)
+        self.norm2 = norm(planes)
+        self.conv2 = conv3x3(planes, planes)
+
+    def forward(self, x):
+        shortcut = x
+
+        out = self.relu(self.norm1(x))
+
+        if self.downsample is not None:
+            shortcut = self.downsample(out)
+
+        out = self.conv1(out)
+        out = self.norm2(out)
+        out = self.relu(out)
+        out = self.conv2(out)
+
+        return out + shortcut
+
+
+class ConcatConv2d(nn.Module):
+
+    def __init__(self, dim_in, dim_out, ksize=3, stride=1, padding=0, dilation=1, groups=1, bias=True, transpose=False):
+        super(ConcatConv2d, self).__init__()
+        module = nn.ConvTranspose2d if transpose else nn.Conv2d
+        self._layer = module(
+            dim_in + 1, dim_out, kernel_size=ksize, stride=stride, padding=padding, dilation=dilation, groups=groups,
+            bias=bias
+        )
+
+    def forward(self, t, x):
+        tt = torch.ones_like(x[:, :1, :, :]) * t
+        ttx = torch.cat([tt, x], 1)
+        return self._layer(ttx)
+
+
+class ODEfunc(nn.Module):
+
+    def __init__(self, dim, kernel_size):
+        super(ODEfunc, self).__init__()
+        self.norm1 = norm(dim)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = ConcatConv2d(dim, dim, kernel_size, 1, (kernel_size//2))
+        self.norm2 = norm(dim)
+        self.conv2 = ConcatConv2d(dim, dim, kernel_size, 1, (kernel_size//2))
+        self.norm3 = norm(dim)
+        self.nfe = 0
+
+    def forward(self, t, x):
+        self.nfe += 1
+        out = self.norm1(x)
+        out = self.relu(out)
+        out = self.conv1(t, out)
+        out = self.norm2(out)
+        out = self.relu(out)
+        out = self.conv2(t, out)
+        out = self.norm3(out)
+        return out
+
+
+class ODEBlock(nn.Module):
+
+    def __init__(self, odefunc):
+        super(ODEBlock, self).__init__()
+        self.odefunc = odefunc
+        self.integration_time = torch.tensor([0, 1]).float()
+
+    def forward(self, x):
+        self.integration_time = self.integration_time.type_as(x)
+        out = odeint(self.odefunc, x, self.integration_time, rtol=args.tol, atol=args.tol)
+        return out[1]
+
+    @property
+    def nfe(self):
+        return self.odefunc.nfe
+
+    @nfe.setter
+    def nfe(self, value):
+        self.odefunc.nfe = value
+
+##############################kernel_size=1,3,5,7,9 结合TEM,异步耦合###################
+class ODEBlock_coupling(nn.Module):
+
+    def __init__(self, dim):
+        super(ODEBlock_coupling, self).__init__()
+        self.odefunc = nn.ModuleList([ODEfunc(dim, 3).to(device),ODEfunc(dim, 5).to(device),ODEfunc(dim, 7).to(device)])
+        self.alphafc = nn.Sequential(nn.Linear(args.num_block, args.hidden_dim), nn.Tanh(), nn.Linear(args.hidden_dim, args.num_block))
+
+    def forward(self, x):
+        num_step = int(args.depth/args.step_size)
+        out = x; t = 0.0
+        alpha = torch.ones(args.num_block).to(device) / args.num_block
+        for i in range(num_step):
+            dhdt = 0
+            weight = F.softmax(alpha, dim=-1)
+            if i % args.coupling_func == 0:
+                for j in range(args.num_block):
+                    dhdt = dhdt + self.odefunc[j](t,out) * weight[j]
+                out = out + dhdt * args.step_size * args.func_size
+            if i % args.coupling_alpha == 0:
+                alpha = alpha + self.alphafc(alpha.unsqueeze(0)).squeeze() * args.step_size  * args.alpha_size
+            t = t + args.step_size
+        return out
+##############################kernel_size=1,3,5,7,9 结合TEM,异步耦合    2    ###################
+class ODEBlock_coupling2(nn.Module):
+
+    def __init__(self, dim):
+        super(ODEBlock_coupling2, self).__init__()
+        self.odefunc = nn.ModuleList([ODEfunc(dim, 3).to(device),ODEfunc(dim, 5).to(device)])#,ODEfunc(dim, 7).to(device)
+        self.alphafc = nn.Sequential(nn.Linear(args.num_block, args.hidden_dim), nn.Tanh(), nn.Linear(args.hidden_dim, args.num_block))
+
+    def forward(self, x):
+        num_step = int(args.depth/args.step_size)
+        out = x; t = 0.0
+        alpha = torch.ones(args.num_block).to(device) / args.num_block
+        for i in range(num_step):
+            dhdt = 0
+            weight = F.softmax(alpha, dim=-1)
+            if i % args.coupling_func == 0:
+                for j in range(args.num_block):
+                    dhdt = dhdt + self.odefunc[j](t,out) * weight[j]
+                out = out + dhdt * args.step_size * args.func_size
+            if i % args.coupling_alpha == 0:
+                alpha = alpha + self.alphafc(alpha.unsqueeze(0)).squeeze() * args.step_size  * args.alpha_size
+            t = t + args.step_size
+        return out
+##############################kernel_size=1,3,5,7,9 结合TEM,异步耦合###################
+class ODEBlock_tem_func(nn.Module):
+
+    def __init__(self, dim):
+        super(ODEBlock_tem_func, self).__init__()
+        self.odefunc = nn.ModuleList([ODEfunc(dim, 3).to(device), ODEfunc(dim, 5).to(device), ODEfunc(dim, 7).to(device)])
+        self.alphafc = nn.Sequential(nn.Linear(args.num_block, args.hidden_dim), nn.Tanh(), nn.Linear(args.hidden_dim, args.num_block))
+
+    def forward(self, x):
+        num_step = int(args.depth/args.step_size)
+        out = x; t = 0.0
+        alpha = torch.ones(args.num_block).to(device) / args.num_block
+        for i in range(num_step):
+            dhdt = 0
+            weight = F.softmax(alpha, dim=-1)
+            if i % args.coupling == 0:
+                for j in range(args.num_block):
+                    dhdt = dhdt + self.odefunc[j](t,out) * weight[j]
+                out = out + dhdt * args.step_size * 2
+            alpha = alpha + self.alphafc(alpha.unsqueeze(0)).squeeze() * args.step_size
+            t = t + args.step_size
+        return out
+
+##############################TEM###################
+class ODEBlock(nn.Module):
+
+    def __init__(self, dim):
+        super(ODEBlock, self).__init__()
+        self.odefunc = nn.ModuleList([ODEfunc(dim,3).to(device) for _ in range(args.num_block)])
+        self.alphafc = nn.Sequential(nn.Linear(args.num_block, args.hidden_dim), nn.Tanh(), nn.Linear(args.hidden_dim, args.num_block))
+
+    def forward(self, x):
+        num_step = int(args.depth/args.step_size)
+        out = x; t = 0.0
+        alpha = torch.ones(args.num_block).to(device) / args.num_block
+        for i in range(num_step):
+            dhdt = 0
+            weight = F.softmax(alpha, dim=-1)
+            if i % args.coupling_func == 0:
+                for j in range(args.num_block):
+                    dhdt = dhdt + self.odefunc[j](t,out) * weight[j]
+                out = out + dhdt * args.step_size * args.func_size
+            if i % args.coupling_alpha == 0:
+                alpha = alpha + self.alphafc(alpha.unsqueeze(0)).squeeze() * args.step_size  * args.alpha_size
+            t = t + args.step_size
+        return out
+
+class Flatten(nn.Module):
+
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def forward(self, x):
+        shape = torch.prod(torch.tensor(x.shape[1:])).item()
+        return x.view(-1, shape)
+
+
+class RunningAverageMeter(object):
+    """Computes and stores the average and current value"""
+
+    def __init__(self, momentum=0.99):
+        self.momentum = momentum
+        self.reset()
+
+    def reset(self):
+        self.val = None
+        self.avg = 0
+
+    def update(self, val):
+        if self.val is None:
+            self.avg = val
+        else:
+            self.avg = self.avg * self.momentum + val * (1 - self.momentum)
+        self.val = val
+
+def get_cifar100_loaders(data_aug=False, batch_size=128, test_batch_size=128, perc=1.0):
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+    if data_aug:
+        transform_train = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(32, padding=4),
+            transforms.ToTensor(),
+            normalize,
+        ])
+    else:
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            normalize,
+        ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+            normalize,
+    ])
+
+    train_loader = DataLoader(
+        datasets.CIFAR100(root='/data1/XIAO_XIAO/NODE/example-y0-noise/data', train=True, download=True, transform=transform_train), batch_size=batch_size,
+        shuffle=True, num_workers=2, drop_last=True
+    )
+
+    test_loader = DataLoader(
+        datasets.CIFAR100(root='/data1/XIAO_XIAO/NODE/example-y0-noise/data', train=False, download=True, transform=transform_test),
+        batch_size=test_batch_size, shuffle=False, num_workers=2, drop_last=True
+    )
+
+    return train_loader, test_loader, None
+
+
+def inf_generator(iterable):
+    """Allows training with DataLoaders in a single infinite loop:
+        for i, (x, y) in enumerate(inf_generator(train_loader)):
+    """
+    iterator = iterable.__iter__()
+    while True:
+        try:
+            yield iterator.__next__()
+        except StopIteration:
+            iterator = iterable.__iter__()
+
+
+def learning_rate_with_decay(batch_size, batch_denom, batches_per_epoch, boundary_epochs, decay_rates):
+    initial_learning_rate = args.lr * batch_size / batch_denom
+
+    boundaries = [int(batches_per_epoch * epoch) for epoch in boundary_epochs]
+    vals = [initial_learning_rate * decay for decay in decay_rates]
+
+    def learning_rate_fn(itr):
+        lt = [itr < b for b in boundaries] + [True]
+        i = np.argmax(lt)
+        return vals[i]
+
+    return learning_rate_fn
+
+
+def one_hot(x, K):
+    return np.array(x[:, None] == np.arange(K)[None, :], dtype=int)
+
+def accuracy(model, dataset_loader):
+    correct_1 = 0.0
+    correct_5 = 0.0
+    for x, y in dataset_loader:
+        x = x.to(device)
+        y = y.to(device)
+
+        output = model(x)
+
+        _, pred = output.topk(5, 1, largest=True, sorted=True)
+        label = y.view(y.size(0), -1).expand_as(pred)
+        correct = pred.eq(label).float()
+        ####compute top1
+        correct_1 += correct[:,:1].sum()
+        ####compute top5
+        correct_5 += correct[:,:5].sum()
+
+    return correct_1 / len(dataset_loader.dataset), correct_5 / len(dataset_loader.dataset)
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+def makedirs(dirname):  # 判断是否需要创建文件夹,存在则跳过
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+
+def get_logger(logpath, filepath, package_files=[], displaying=True, saving=True, debug=False):
+    logger = logging.getLogger()
+    if debug:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+    logger.setLevel(level)
+    if saving:
+        info_file_handler = logging.FileHandler(logpath, mode="a")
+        info_file_handler.setLevel(level)
+        logger.addHandler(info_file_handler)
+    if displaying:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(level)
+        logger.addHandler(console_handler)
+    logger.info(filepath)
+    with open(filepath, "r") as f:
+        logger.info(f.read())
+
+    for f in package_files:
+        logger.info(f)
+        with open(f, "r") as package_f:
+            logger.info(package_f.read())
+
+    return logger
+from thop import profile
+
+if __name__ == '__main__':
+
+    path_seed = './result_c100_{}_{}_{}_num_block={}_func_size={}_alpha_size={}_coupling_func={}_coupling_alpha={}'.format(args.method, args.network, args.func, args.num_block, args.func_size,  args.alpha_size, args.coupling_func, args.coupling_alpha)
+    if not os.path.isdir(path_seed):
+        os.makedirs(path_seed)
+    makedirs(path_seed)
+    logger = get_logger(logpath=os.path.join(path_seed, 'logs_{}'.format(args.seed)), filepath=os.path.abspath(__file__))
+    logger.info(args)
+
+    device = torch.device('cuda:' + str(args.gpu) if torch.cuda.is_available() else 'cpu')
+
+    is_odenet = args.network == 'odenet'
+
+    if args.downsampling_method == 'conv':
+        downsampling_layers = [
+            nn.Conv2d(3, 64, 3, 1),
+            norm(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, 4, 2, 1),
+            norm(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, 4, 2, 1),
+        ]
+    elif args.downsampling_method == 'res':
+        downsampling_layers = [
+            nn.Conv2d(3, 64, 3, 1),
+            ResBlock(64, 64, stride=2, downsample=conv1x1(64, 64, 2)),
+            ResBlock(64, 64, stride=2, downsample=conv1x1(64, 64, 2)),
+        ]
+    
+    if args.func == 'odetem':
+        feature_layers = [ODEBlock(64)] if is_odenet else [ResBlock(64, 64) for _ in range(6)]
+    if args.func == 'coupling':
+        feature_layers = [ODEBlock_coupling(64)] if is_odenet else [ResBlock(64, 64) for _ in range(6)]
+    if args.func == 'coupling2':
+        feature_layers = [ODEBlock_coupling2(64)] if is_odenet else [ResBlock(64, 64) for _ in range(6)]
+    if args.func == 'temfunc':
+        feature_layers = [ODEBlock_tem_func(64)] if is_odenet else [ResBlock(64, 64) for _ in range(6)]
+    fc_layers = [norm(64), nn.ReLU(inplace=True), nn.AdaptiveAvgPool2d((1, 1)), Flatten(), nn.Linear(64, 100)]
+
+    model = nn.Sequential(*downsampling_layers, *feature_layers, *fc_layers).to(device)
+    x = torch.randn(1, 3, 28, 28).to(device)
+    flops, params = profile(model, inputs=(x,))
+    print('flops  of ODE is %.2fG' % (flops/1e9))
+    logger.info(model)
+    logger.info('Number of parameters: {}'.format(count_parameters(model)))
+
+    criterion = nn.CrossEntropyLoss().to(device)
+
+    train_loader, test_loader, train_eval_loader = get_cifar100_loaders(
+        args.data_aug, args.batch_size, args.test_batch_size
+    )
+
+    data_gen = inf_generator(train_loader)
+    batches_per_epoch = len(train_loader)
+
+    lr_fn = learning_rate_with_decay(
+        args.batch_size, batch_denom=128, batches_per_epoch=batches_per_epoch, boundary_epochs=[60, 100, 140],
+        decay_rates=[1, 0.1, 0.01, 0.001]
+    )
+
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
+
+    best_acc = 0
+    batch_time_meter = RunningAverageMeter()
+    inference_time_meter = RunningAverageMeter()
+    f_nfe_meter = RunningAverageMeter()
+    b_nfe_meter = RunningAverageMeter()
+    end = time.time()
+
+    for itr in range(args.nepochs * batches_per_epoch):
+
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr_fn(itr)
+
+        optimizer.zero_grad()
+        x, y = data_gen.__next__()
+        x = x.to(device)
+        y = y.to(device)
+        logits = model(x)
+        loss = criterion(logits, y)
+
+        loss.backward()
+        optimizer.step()
+
+        batch_time_meter.update(time.time() - end)
+        end = time.time()
+
+        if itr % batches_per_epoch == 0:
+            with torch.no_grad():
+                train_acc1, train_acc5 = accuracy(model, train_loader)
+                inference_end = time.time()
+                val_acc1, val_acc5 = accuracy(model, test_loader)
+                inference_time_meter.update(time.time() - inference_end)
+                if val_acc1 > best_acc:
+                    torch.save({'state_dict': model.state_dict(), 'args': args}, os.path.join(path_seed, 'model_{}.pth'.format(args.seed)))
+                    best_acc = val_acc1
+                logger.info(
+                    "Epoch {:04d} | " "Train_1 Acc {:.4f} | Train_5 Acc {:.4f} | Test_1 Acc {:.4f} | Test_5 Acc {:.4f} |Train Time {:.3f} ({:.3f}) |Test Time {:.3f} ({:.3f})".format(
+                        itr // batches_per_epoch, train_acc1, train_acc5, val_acc1, val_acc5, batch_time_meter.val, batch_time_meter.avg, inference_time_meter.val, inference_time_meter.avg
+                    )
+                )
+
+Namespace(adjoint=False, alpha_size=1.0, batch_size=128, coupling=2, coupling_alpha=1, coupling_func=4, data_aug=True, debug=False, depth=1.0, downsampling_method='conv', func='coupling2', func_size=1.0, gpu=2, hidden_dim=1000, lr=0.1, method='euler', nepochs=160, network='odenet', num_block=2, seed=3, step_size=0.05, test_batch_size=128, tol=0.001)
+Sequential(
+  (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1))
+  (1): GroupNorm(32, 64, eps=1e-05, affine=True)
+  (2): ReLU(inplace=True)
+  (3): Conv2d(64, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+  (4): GroupNorm(32, 64, eps=1e-05, affine=True)
+  (5): ReLU(inplace=True)
+  (6): Conv2d(64, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+  (7): ODEBlock_coupling2(
+    (odefunc): ModuleList(
+      (0): ODEfunc(
+        (norm1): GroupNorm(32, 64, eps=1e-05, affine=True)
+        (relu): ReLU(inplace=True)
+        (conv1): ConcatConv2d(
+          (_layer): Conv2d(65, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (norm2): GroupNorm(32, 64, eps=1e-05, affine=True)
+        (conv2): ConcatConv2d(
+          (_layer): Conv2d(65, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        )
+        (norm3): GroupNorm(32, 64, eps=1e-05, affine=True)
+      )
+      (1): ODEfunc(
+        (norm1): GroupNorm(32, 64, eps=1e-05, affine=True)
+        (relu): ReLU(inplace=True)
+        (conv1): ConcatConv2d(
+          (_layer): Conv2d(65, 64, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+        )
+        (norm2): GroupNorm(32, 64, eps=1e-05, affine=True)
+        (conv2): ConcatConv2d(
+          (_layer): Conv2d(65, 64, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2))
+        )
+        (norm3): GroupNorm(32, 64, eps=1e-05, affine=True)
+      )
+    )
+    (alphafc): Sequential(
+      (0): Linear(in_features=2, out_features=1000, bias=True)
+      (1): Tanh()
+      (2): Linear(in_features=1000, out_features=2, bias=True)
+    )
+  )
+  (8): GroupNorm(32, 64, eps=1e-05, affine=True)
+  (9): ReLU(inplace=True)
+  (10): AdaptiveAvgPool2d(output_size=(1, 1))
+  (11): Flatten()
+  (12): Linear(in_features=64, out_features=100, bias=True)
+)
+Number of parameters: 428782
+Epoch 0000 | Train_1 Acc 0.0071 | Train_5 Acc 0.0505 | Test_1 Acc 0.0075 | Test_5 Acc 0.0493 |Train Time 0.318 (0.318) |Test Time 1.751 (1.751)
+Epoch 0001 | Train_1 Acc 0.0837 | Train_5 Acc 0.2864 | Test_1 Acc 0.0853 | Test_5 Acc 0.2895 |Train Time 0.358 (0.065) |Test Time 1.776 (1.751)
+Epoch 0002 | Train_1 Acc 0.1382 | Train_5 Acc 0.3932 | Test_1 Acc 0.1316 | Test_5 Acc 0.3772 |Train Time 0.386 (0.060) |Test Time 1.778 (1.751)
+Epoch 0003 | Train_1 Acc 0.2085 | Train_5 Acc 0.4909 | Test_1 Acc 0.1894 | Test_5 Acc 0.4716 |Train Time 0.381 (0.059) |Test Time 2.050 (1.754)
+Epoch 0004 | Train_1 Acc 0.2516 | Train_5 Acc 0.5661 | Test_1 Acc 0.2450 | Test_5 Acc 0.5543 |Train Time 0.474 (0.062) |Test Time 1.785 (1.754)
+Epoch 0005 | Train_1 Acc 0.2935 | Train_5 Acc 0.6083 | Test_1 Acc 0.2688 | Test_5 Acc 0.5765 |Train Time 0.365 (0.059) |Test Time 1.824 (1.755)
+Epoch 0006 | Train_1 Acc 0.3098 | Train_5 Acc 0.6295 | Test_1 Acc 0.2924 | Test_5 Acc 0.6006 |Train Time 0.388 (0.059) |Test Time 1.795 (1.756)
+Epoch 0007 | Train_1 Acc 0.3427 | Train_5 Acc 0.6675 | Test_1 Acc 0.3252 | Test_5 Acc 0.6431 |Train Time 0.420 (0.059) |Test Time 1.804 (1.756)
+Epoch 0008 | Train_1 Acc 0.3564 | Train_5 Acc 0.6746 | Test_1 Acc 0.3370 | Test_5 Acc 0.6579 |Train Time 0.393 (0.059) |Test Time 1.747 (1.756)
+Epoch 0009 | Train_1 Acc 0.3721 | Train_5 Acc 0.6987 | Test_1 Acc 0.3565 | Test_5 Acc 0.6811 |Train Time 0.349 (0.058) |Test Time 1.887 (1.757)
+Epoch 0010 | Train_1 Acc 0.3914 | Train_5 Acc 0.7127 | Test_1 Acc 0.3525 | Test_5 Acc 0.6741 |Train Time 0.360 (0.059) |Test Time 2.033 (1.760)
+Epoch 0011 | Train_1 Acc 0.3969 | Train_5 Acc 0.7242 | Test_1 Acc 0.3639 | Test_5 Acc 0.6909 |Train Time 0.420 (0.060) |Test Time 1.736 (1.760)
+Epoch 0012 | Train_1 Acc 0.4197 | Train_5 Acc 0.7449 | Test_1 Acc 0.3972 | Test_5 Acc 0.7083 |Train Time 0.365 (0.058) |Test Time 1.933 (1.761)
+Epoch 0013 | Train_1 Acc 0.4210 | Train_5 Acc 0.7427 | Test_1 Acc 0.4015 | Test_5 Acc 0.7200 |Train Time 0.402 (0.058) |Test Time 1.793 (1.762)
+Epoch 0014 | Train_1 Acc 0.4422 | Train_5 Acc 0.7637 | Test_1 Acc 0.4131 | Test_5 Acc 0.7326 |Train Time 0.386 (0.060) |Test Time 1.863 (1.763)
+Epoch 0015 | Train_1 Acc 0.4426 | Train_5 Acc 0.7657 | Test_1 Acc 0.4037 | Test_5 Acc 0.7278 |Train Time 0.404 (0.059) |Test Time 1.737 (1.763)
+Epoch 0016 | Train_1 Acc 0.4681 | Train_5 Acc 0.7859 | Test_1 Acc 0.4295 | Test_5 Acc 0.7461 |Train Time 0.369 (0.059) |Test Time 1.737 (1.762)
+Epoch 0017 | Train_1 Acc 0.4579 | Train_5 Acc 0.7742 | Test_1 Acc 0.4076 | Test_5 Acc 0.7289 |Train Time 0.366 (0.060) |Test Time 1.784 (1.763)
+Epoch 0018 | Train_1 Acc 0.4751 | Train_5 Acc 0.7857 | Test_1 Acc 0.4307 | Test_5 Acc 0.7436 |Train Time 0.346 (0.058) |Test Time 1.794 (1.763)
+Epoch 0019 | Train_1 Acc 0.4844 | Train_5 Acc 0.7912 | Test_1 Acc 0.4402 | Test_5 Acc 0.7518 |Train Time 0.373 (0.060) |Test Time 1.696 (1.762)
+Epoch 0020 | Train_1 Acc 0.4965 | Train_5 Acc 0.8038 | Test_1 Acc 0.4505 | Test_5 Acc 0.7570 |Train Time 0.327 (0.059) |Test Time 1.831 (1.763)
+Epoch 0021 | Train_1 Acc 0.4980 | Train_5 Acc 0.8004 | Test_1 Acc 0.4397 | Test_5 Acc 0.7483 |Train Time 0.375 (0.059) |Test Time 2.168 (1.767)
+Epoch 0022 | Train_1 Acc 0.5080 | Train_5 Acc 0.8130 | Test_1 Acc 0.4559 | Test_5 Acc 0.7624 |Train Time 0.503 (0.061) |Test Time 1.816 (1.767)
+Epoch 0023 | Train_1 Acc 0.5198 | Train_5 Acc 0.8175 | Test_1 Acc 0.4610 | Test_5 Acc 0.7660 |Train Time 0.361 (0.060) |Test Time 1.923 (1.769)
+Epoch 0024 | Train_1 Acc 0.5258 | Train_5 Acc 0.8278 | Test_1 Acc 0.4676 | Test_5 Acc 0.7698 |Train Time 0.351 (0.058) |Test Time 1.841 (1.770)
+Epoch 0025 | Train_1 Acc 0.5255 | Train_5 Acc 0.8275 | Test_1 Acc 0.4704 | Test_5 Acc 0.7782 |Train Time 0.425 (0.057) |Test Time 1.987 (1.772)
+Epoch 0026 | Train_1 Acc 0.5260 | Train_5 Acc 0.8274 | Test_1 Acc 0.4661 | Test_5 Acc 0.7701 |Train Time 0.371 (0.066) |Test Time 1.925 (1.773)
+Epoch 0027 | Train_1 Acc 0.5331 | Train_5 Acc 0.8356 | Test_1 Acc 0.4708 | Test_5 Acc 0.7737 |Train Time 0.441 (0.065) |Test Time 2.216 (1.778)
+Epoch 0028 | Train_1 Acc 0.5478 | Train_5 Acc 0.8423 | Test_1 Acc 0.4789 | Test_5 Acc 0.7829 |Train Time 0.432 (0.062) |Test Time 2.413 (1.784)
+Epoch 0029 | Train_1 Acc 0.5337 | Train_5 Acc 0.8315 | Test_1 Acc 0.4691 | Test_5 Acc 0.7734 |Train Time 0.393 (0.063) |Test Time 2.207 (1.788)
+Epoch 0030 | Train_1 Acc 0.5314 | Train_5 Acc 0.8331 | Test_1 Acc 0.4645 | Test_5 Acc 0.7734 |Train Time 0.476 (0.063) |Test Time 2.462 (1.795)
+Epoch 0031 | Train_1 Acc 0.5471 | Train_5 Acc 0.8407 | Test_1 Acc 0.4745 | Test_5 Acc 0.7778 |Train Time 0.396 (0.062) |Test Time 2.263 (1.800)
+Epoch 0032 | Train_1 Acc 0.5605 | Train_5 Acc 0.8488 | Test_1 Acc 0.4889 | Test_5 Acc 0.7878 |Train Time 0.388 (0.063) |Test Time 2.211 (1.804)
+Epoch 0033 | Train_1 Acc 0.5384 | Train_5 Acc 0.8309 | Test_1 Acc 0.4675 | Test_5 Acc 0.7702 |Train Time 0.356 (0.063) |Test Time 2.248 (1.808)
+Epoch 0034 | Train_1 Acc 0.5708 | Train_5 Acc 0.8579 | Test_1 Acc 0.4905 | Test_5 Acc 0.7852 |Train Time 0.386 (0.063) |Test Time 2.307 (1.813)
+Epoch 0035 | Train_1 Acc 0.5665 | Train_5 Acc 0.8549 | Test_1 Acc 0.4845 | Test_5 Acc 0.7847 |Train Time 0.389 (0.063) |Test Time 2.188 (1.817)
+Epoch 0036 | Train_1 Acc 0.5680 | Train_5 Acc 0.8575 | Test_1 Acc 0.4891 | Test_5 Acc 0.7881 |Train Time 0.451 (0.064) |Test Time 2.442 (1.823)
+Epoch 0037 | Train_1 Acc 0.5797 | Train_5 Acc 0.8653 | Test_1 Acc 0.4977 | Test_5 Acc 0.7931 |Train Time 0.403 (0.063) |Test Time 2.023 (1.825)
+Epoch 0038 | Train_1 Acc 0.5903 | Train_5 Acc 0.8669 | Test_1 Acc 0.5005 | Test_5 Acc 0.7982 |Train Time 0.418 (0.062) |Test Time 2.193 (1.829)
+Epoch 0039 | Train_1 Acc 0.5831 | Train_5 Acc 0.8640 | Test_1 Acc 0.4932 | Test_5 Acc 0.7896 |Train Time 0.392 (0.061) |Test Time 2.412 (1.835)
+Epoch 0040 | Train_1 Acc 0.5922 | Train_5 Acc 0.8735 | Test_1 Acc 0.4976 | Test_5 Acc 0.8001 |Train Time 0.437 (0.064) |Test Time 2.170 (1.838)
+Epoch 0041 | Train_1 Acc 0.5810 | Train_5 Acc 0.8671 | Test_1 Acc 0.4946 | Test_5 Acc 0.7957 |Train Time 0.476 (0.064) |Test Time 2.291 (1.843)
+Epoch 0042 | Train_1 Acc 0.5988 | Train_5 Acc 0.8742 | Test_1 Acc 0.5079 | Test_5 Acc 0.8018 |Train Time 0.484 (0.066) |Test Time 2.261 (1.847)
+Epoch 0043 | Train_1 Acc 0.5840 | Train_5 Acc 0.8671 | Test_1 Acc 0.4954 | Test_5 Acc 0.7931 |Train Time 0.398 (0.062) |Test Time 2.551 (1.854)
+Epoch 0044 | Train_1 Acc 0.5994 | Train_5 Acc 0.8752 | Test_1 Acc 0.5013 | Test_5 Acc 0.7931 |Train Time 0.400 (0.064) |Test Time 2.139 (1.857)
+Epoch 0045 | Train_1 Acc 0.5985 | Train_5 Acc 0.8782 | Test_1 Acc 0.4965 | Test_5 Acc 0.7982 |Train Time 0.391 (0.063) |Test Time 2.350 (1.862)
+Epoch 0046 | Train_1 Acc 0.6080 | Train_5 Acc 0.8838 | Test_1 Acc 0.5046 | Test_5 Acc 0.8017 |Train Time 0.379 (0.064) |Test Time 2.176 (1.865)
+Epoch 0047 | Train_1 Acc 0.6113 | Train_5 Acc 0.8835 | Test_1 Acc 0.4981 | Test_5 Acc 0.7988 |Train Time 0.408 (0.058) |Test Time 2.524 (1.871)
+Epoch 0048 | Train_1 Acc 0.5997 | Train_5 Acc 0.8802 | Test_1 Acc 0.4968 | Test_5 Acc 0.7933 |Train Time 0.400 (0.064) |Test Time 2.024 (1.873)
+Epoch 0049 | Train_1 Acc 0.6064 | Train_5 Acc 0.8840 | Test_1 Acc 0.5075 | Test_5 Acc 0.8014 |Train Time 0.410 (0.063) |Test Time 2.222 (1.876)
+Epoch 0050 | Train_1 Acc 0.6123 | Train_5 Acc 0.8876 | Test_1 Acc 0.5102 | Test_5 Acc 0.7995 |Train Time 0.464 (0.063) |Test Time 2.329 (1.881)
+Epoch 0051 | Train_1 Acc 0.6115 | Train_5 Acc 0.8889 | Test_1 Acc 0.4996 | Test_5 Acc 0.7976 |Train Time 0.394 (0.063) |Test Time 2.285 (1.885)
+Epoch 0052 | Train_1 Acc 0.6212 | Train_5 Acc 0.8916 | Test_1 Acc 0.5122 | Test_5 Acc 0.8070 |Train Time 0.386 (0.063) |Test Time 2.215 (1.888)
+Epoch 0053 | Train_1 Acc 0.6300 | Train_5 Acc 0.8936 | Test_1 Acc 0.5215 | Test_5 Acc 0.8056 |Train Time 0.444 (0.063) |Test Time 2.127 (1.891)
+Epoch 0054 | Train_1 Acc 0.6172 | Train_5 Acc 0.8862 | Test_1 Acc 0.5041 | Test_5 Acc 0.7996 |Train Time 0.400 (0.065) |Test Time 2.114 (1.893)
+Epoch 0055 | Train_1 Acc 0.6106 | Train_5 Acc 0.8838 | Test_1 Acc 0.5084 | Test_5 Acc 0.8002 |Train Time 0.387 (0.062) |Test Time 2.336 (1.897)
+Epoch 0056 | Train_1 Acc 0.6166 | Train_5 Acc 0.8860 | Test_1 Acc 0.5021 | Test_5 Acc 0.7983 |Train Time 0.384 (0.063) |Test Time 2.391 (1.902)
+Epoch 0057 | Train_1 Acc 0.6320 | Train_5 Acc 0.8957 | Test_1 Acc 0.5131 | Test_5 Acc 0.8054 |Train Time 0.386 (0.062) |Test Time 2.234 (1.906)
+Epoch 0058 | Train_1 Acc 0.6308 | Train_5 Acc 0.8953 | Test_1 Acc 0.5080 | Test_5 Acc 0.8027 |Train Time 0.381 (0.062) |Test Time 2.021 (1.907)
+Epoch 0059 | Train_1 Acc 0.6306 | Train_5 Acc 0.8926 | Test_1 Acc 0.5160 | Test_5 Acc 0.8066 |Train Time 0.359 (0.060) |Test Time 1.932 (1.907)
+Epoch 0060 | Train_1 Acc 0.6292 | Train_5 Acc 0.8949 | Test_1 Acc 0.5079 | Test_5 Acc 0.7998 |Train Time 0.390 (0.061) |Test Time 2.010 (1.908)
+Epoch 0061 | Train_1 Acc 0.6875 | Train_5 Acc 0.9233 | Test_1 Acc 0.5431 | Test_5 Acc 0.8236 |Train Time 0.371 (0.063) |Test Time 2.011 (1.909)
+Epoch 0062 | Train_1 Acc 0.6920 | Train_5 Acc 0.9246 | Test_1 Acc 0.5418 | Test_5 Acc 0.8244 |Train Time 0.369 (0.063) |Test Time 1.832 (1.908)
+Epoch 0063 | Train_1 Acc 0.6964 | Train_5 Acc 0.9267 | Test_1 Acc 0.5504 | Test_5 Acc 0.8266 |Train Time 0.420 (0.064) |Test Time 1.915 (1.908)
+Epoch 0064 | Train_1 Acc 0.6967 | Train_5 Acc 0.9281 | Test_1 Acc 0.5463 | Test_5 Acc 0.8252 |Train Time 0.424 (0.065) |Test Time 1.911 (1.908)
+Epoch 0065 | Train_1 Acc 0.6992 | Train_5 Acc 0.9274 | Test_1 Acc 0.5504 | Test_5 Acc 0.8281 |Train Time 0.398 (0.065) |Test Time 1.809 (1.907)
+Epoch 0066 | Train_1 Acc 0.7011 | Train_5 Acc 0.9292 | Test_1 Acc 0.5491 | Test_5 Acc 0.8258 |Train Time 0.409 (0.064) |Test Time 2.008 (1.908)
+Epoch 0067 | Train_1 Acc 0.7038 | Train_5 Acc 0.9295 | Test_1 Acc 0.5532 | Test_5 Acc 0.8288 |Train Time 0.434 (0.065) |Test Time 2.068 (1.910)
+Epoch 0068 | Train_1 Acc 0.7003 | Train_5 Acc 0.9296 | Test_1 Acc 0.5477 | Test_5 Acc 0.8268 |Train Time 0.390 (0.065) |Test Time 2.122 (1.912)
+Epoch 0069 | Train_1 Acc 0.7040 | Train_5 Acc 0.9314 | Test_1 Acc 0.5479 | Test_5 Acc 0.8291 |Train Time 0.400 (0.062) |Test Time 2.054 (1.914)
+Epoch 0070 | Train_1 Acc 0.7054 | Train_5 Acc 0.9304 | Test_1 Acc 0.5479 | Test_5 Acc 0.8288 |Train Time 0.389 (0.065) |Test Time 2.013 (1.915)
+Epoch 0071 | Train_1 Acc 0.7062 | Train_5 Acc 0.9307 | Test_1 Acc 0.5495 | Test_5 Acc 0.8302 |Train Time 0.426 (0.065) |Test Time 1.953 (1.915)
+Epoch 0072 | Train_1 Acc 0.7050 | Train_5 Acc 0.9319 | Test_1 Acc 0.5481 | Test_5 Acc 0.8263 |Train Time 0.365 (0.061) |Test Time 2.203 (1.918)
+Epoch 0073 | Train_1 Acc 0.7095 | Train_5 Acc 0.9326 | Test_1 Acc 0.5457 | Test_5 Acc 0.8276 |Train Time 0.415 (0.064) |Test Time 2.314 (1.922)
+Epoch 0074 | Train_1 Acc 0.7068 | Train_5 Acc 0.9331 | Test_1 Acc 0.5473 | Test_5 Acc 0.8288 |Train Time 0.390 (0.063) |Test Time 2.041 (1.923)
+Epoch 0075 | Train_1 Acc 0.7123 | Train_5 Acc 0.9345 | Test_1 Acc 0.5501 | Test_5 Acc 0.8294 |Train Time 0.423 (0.062) |Test Time 2.394 (1.928)
+Epoch 0076 | Train_1 Acc 0.7135 | Train_5 Acc 0.9350 | Test_1 Acc 0.5490 | Test_5 Acc 0.8264 |Train Time 0.447 (0.063) |Test Time 2.946 (1.938)
+Epoch 0077 | Train_1 Acc 0.7131 | Train_5 Acc 0.9335 | Test_1 Acc 0.5488 | Test_5 Acc 0.8288 |Train Time 0.427 (0.069) |Test Time 2.703 (1.946)
+Epoch 0078 | Train_1 Acc 0.7107 | Train_5 Acc 0.9351 | Test_1 Acc 0.5480 | Test_5 Acc 0.8292 |Train Time 0.518 (0.065) |Test Time 2.533 (1.951)
+Epoch 0079 | Train_1 Acc 0.7119 | Train_5 Acc 0.9350 | Test_1 Acc 0.5523 | Test_5 Acc 0.8287 |Train Time 0.432 (0.066) |Test Time 2.622 (1.958)
+Epoch 0080 | Train_1 Acc 0.7099 | Train_5 Acc 0.9366 | Test_1 Acc 0.5468 | Test_5 Acc 0.8278 |Train Time 0.447 (0.067) |Test Time 2.445 (1.963)
+Epoch 0081 | Train_1 Acc 0.7159 | Train_5 Acc 0.9367 | Test_1 Acc 0.5506 | Test_5 Acc 0.8303 |Train Time 0.384 (0.064) |Test Time 2.462 (1.968)
+Epoch 0082 | Train_1 Acc 0.7130 | Train_5 Acc 0.9361 | Test_1 Acc 0.5507 | Test_5 Acc 0.8305 |Train Time 0.379 (0.069) |Test Time 2.654 (1.975)
+Epoch 0083 | Train_1 Acc 0.7160 | Train_5 Acc 0.9364 | Test_1 Acc 0.5498 | Test_5 Acc 0.8318 |Train Time 0.398 (0.069) |Test Time 2.782 (1.983)
+Epoch 0084 | Train_1 Acc 0.7179 | Train_5 Acc 0.9376 | Test_1 Acc 0.5487 | Test_5 Acc 0.8293 |Train Time 0.415 (0.066) |Test Time 2.385 (1.987)
+Epoch 0085 | Train_1 Acc 0.7182 | Train_5 Acc 0.9393 | Test_1 Acc 0.5518 | Test_5 Acc 0.8309 |Train Time 0.441 (0.071) |Test Time 2.585 (1.993)
+Epoch 0086 | Train_1 Acc 0.7196 | Train_5 Acc 0.9399 | Test_1 Acc 0.5486 | Test_5 Acc 0.8287 |Train Time 0.418 (0.067) |Test Time 2.802 (2.001)
+Epoch 0087 | Train_1 Acc 0.7192 | Train_5 Acc 0.9378 | Test_1 Acc 0.5466 | Test_5 Acc 0.8266 |Train Time 0.397 (0.066) |Test Time 2.595 (2.007)
+Epoch 0088 | Train_1 Acc 0.7175 | Train_5 Acc 0.9389 | Test_1 Acc 0.5500 | Test_5 Acc 0.8289 |Train Time 0.431 (0.067) |Test Time 2.829 (2.015)
+Epoch 0089 | Train_1 Acc 0.7170 | Train_5 Acc 0.9391 | Test_1 Acc 0.5478 | Test_5 Acc 0.8301 |Train Time 0.449 (0.068) |Test Time 2.495 (2.020)
+Epoch 0090 | Train_1 Acc 0.7209 | Train_5 Acc 0.9398 | Test_1 Acc 0.5512 | Test_5 Acc 0.8309 |Train Time 0.403 (0.065) |Test Time 2.731 (2.027)
+Epoch 0091 | Train_1 Acc 0.7192 | Train_5 Acc 0.9386 | Test_1 Acc 0.5503 | Test_5 Acc 0.8288 |Train Time 0.426 (0.068) |Test Time 2.603 (2.033)
+Epoch 0092 | Train_1 Acc 0.7240 | Train_5 Acc 0.9399 | Test_1 Acc 0.5482 | Test_5 Acc 0.8297 |Train Time 0.454 (0.069) |Test Time 2.642 (2.039)
+Epoch 0093 | Train_1 Acc 0.7267 | Train_5 Acc 0.9408 | Test_1 Acc 0.5525 | Test_5 Acc 0.8283 |Train Time 0.456 (0.072) |Test Time 3.119 (2.050)
+Epoch 0094 | Train_1 Acc 0.7257 | Train_5 Acc 0.9421 | Test_1 Acc 0.5497 | Test_5 Acc 0.8279 |Train Time 0.436 (0.085) |Test Time 3.195 (2.061)
+Epoch 0095 | Train_1 Acc 0.7285 | Train_5 Acc 0.9414 | Test_1 Acc 0.5501 | Test_5 Acc 0.8277 |Train Time 0.498 (0.080) |Test Time 3.056 (2.071)
+Epoch 0096 | Train_1 Acc 0.7219 | Train_5 Acc 0.9401 | Test_1 Acc 0.5471 | Test_5 Acc 0.8274 |Train Time 0.521 (0.082) |Test Time 3.590 (2.086)
+Epoch 0097 | Train_1 Acc 0.7230 | Train_5 Acc 0.9397 | Test_1 Acc 0.5487 | Test_5 Acc 0.8285 |Train Time 0.683 (0.096) |Test Time 3.333 (2.099)
+Epoch 0098 | Train_1 Acc 0.7261 | Train_5 Acc 0.9415 | Test_1 Acc 0.5492 | Test_5 Acc 0.8290 |Train Time 0.581 (0.101) |Test Time 3.143 (2.109)
+Epoch 0099 | Train_1 Acc 0.7285 | Train_5 Acc 0.9426 | Test_1 Acc 0.5526 | Test_5 Acc 0.8274 |Train Time 0.592 (0.110) |Test Time 4.158 (2.130)
+Epoch 0100 | Train_1 Acc 0.7241 | Train_5 Acc 0.9410 | Test_1 Acc 0.5482 | Test_5 Acc 0.8289 |Train Time 0.623 (0.109) |Test Time 3.594 (2.144)
+Epoch 0101 | Train_1 Acc 0.7345 | Train_5 Acc 0.9443 | Test_1 Acc 0.5521 | Test_5 Acc 0.8301 |Train Time 0.853 (0.117) |Test Time 3.598 (2.159)
+Epoch 0102 | Train_1 Acc 0.7352 | Train_5 Acc 0.9462 | Test_1 Acc 0.5536 | Test_5 Acc 0.8311 |Train Time 0.759 (0.100) |Test Time 3.466 (2.172)
+Epoch 0103 | Train_1 Acc 0.7365 | Train_5 Acc 0.9462 | Test_1 Acc 0.5529 | Test_5 Acc 0.8301 |Train Time 0.644 (0.097) |Test Time 3.553 (2.186)
+Epoch 0104 | Train_1 Acc 0.7391 | Train_5 Acc 0.9450 | Test_1 Acc 0.5524 | Test_5 Acc 0.8297 |Train Time 0.642 (0.107) |Test Time 3.366 (2.198)
+Epoch 0105 | Train_1 Acc 0.7366 | Train_5 Acc 0.9450 | Test_1 Acc 0.5525 | Test_5 Acc 0.8298 |Train Time 0.585 (0.095) |Test Time 3.442 (2.210)
+Epoch 0106 | Train_1 Acc 0.7370 | Train_5 Acc 0.9451 | Test_1 Acc 0.5524 | Test_5 Acc 0.8308 |Train Time 0.630 (0.097) |Test Time 3.518 (2.223)
+Epoch 0107 | Train_1 Acc 0.7369 | Train_5 Acc 0.9452 | Test_1 Acc 0.5528 | Test_5 Acc 0.8288 |Train Time 0.595 (0.099) |Test Time 3.384 (2.235)
+Epoch 0108 | Train_1 Acc 0.7348 | Train_5 Acc 0.9452 | Test_1 Acc 0.5527 | Test_5 Acc 0.8305 |Train Time 0.504 (0.093) |Test Time 3.416 (2.247)
+Epoch 0109 | Train_1 Acc 0.7356 | Train_5 Acc 0.9461 | Test_1 Acc 0.5537 | Test_5 Acc 0.8297 |Train Time 0.514 (0.099) |Test Time 3.505 (2.259)
+Epoch 0110 | Train_1 Acc 0.7356 | Train_5 Acc 0.9452 | Test_1 Acc 0.5548 | Test_5 Acc 0.8297 |Train Time 0.595 (0.097) |Test Time 3.613 (2.273)
+Epoch 0111 | Train_1 Acc 0.7365 | Train_5 Acc 0.9452 | Test_1 Acc 0.5537 | Test_5 Acc 0.8300 |Train Time 0.632 (0.093) |Test Time 3.446 (2.284)
+Epoch 0112 | Train_1 Acc 0.7364 | Train_5 Acc 0.9454 | Test_1 Acc 0.5541 | Test_5 Acc 0.8306 |Train Time 0.634 (0.102) |Test Time 3.453 (2.296)
+Epoch 0113 | Train_1 Acc 0.7358 | Train_5 Acc 0.9456 | Test_1 Acc 0.5529 | Test_5 Acc 0.8291 |Train Time 0.608 (0.096) |Test Time 3.694 (2.310)
+Epoch 0114 | Train_1 Acc 0.7408 | Train_5 Acc 0.9456 | Test_1 Acc 0.5544 | Test_5 Acc 0.8311 |Train Time 0.702 (0.097) |Test Time 3.292 (2.320)
+Epoch 0115 | Train_1 Acc 0.7370 | Train_5 Acc 0.9448 | Test_1 Acc 0.5533 | Test_5 Acc 0.8304 |Train Time 0.518 (0.101) |Test Time 3.748 (2.334)
+Epoch 0116 | Train_1 Acc 0.7378 | Train_5 Acc 0.9452 | Test_1 Acc 0.5545 | Test_5 Acc 0.8305 |Train Time 0.607 (0.094) |Test Time 3.603 (2.347)
+Epoch 0117 | Train_1 Acc 0.7374 | Train_5 Acc 0.9451 | Test_1 Acc 0.5534 | Test_5 Acc 0.8299 |Train Time 0.599 (0.097) |Test Time 3.454 (2.358)
+Epoch 0118 | Train_1 Acc 0.7349 | Train_5 Acc 0.9455 | Test_1 Acc 0.5542 | Test_5 Acc 0.8307 |Train Time 0.527 (0.103) |Test Time 3.689 (2.371)
+Epoch 0119 | Train_1 Acc 0.7377 | Train_5 Acc 0.9463 | Test_1 Acc 0.5535 | Test_5 Acc 0.8313 |Train Time 0.659 (0.093) |Test Time 3.783 (2.385)
+Epoch 0120 | Train_1 Acc 0.7385 | Train_5 Acc 0.9466 | Test_1 Acc 0.5524 | Test_5 Acc 0.8305 |Train Time 0.604 (0.098) |Test Time 3.286 (2.394)
+Epoch 0121 | Train_1 Acc 0.7361 | Train_5 Acc 0.9464 | Test_1 Acc 0.5527 | Test_5 Acc 0.8296 |Train Time 0.605 (0.101) |Test Time 3.747 (2.408)
+Epoch 0122 | Train_1 Acc 0.7381 | Train_5 Acc 0.9462 | Test_1 Acc 0.5533 | Test_5 Acc 0.8299 |Train Time 0.618 (0.092) |Test Time 3.627 (2.420)
+Epoch 0123 | Train_1 Acc 0.7378 | Train_5 Acc 0.9450 | Test_1 Acc 0.5533 | Test_5 Acc 0.8307 |Train Time 0.517 (0.098) |Test Time 3.646 (2.432)
+Epoch 0124 | Train_1 Acc 0.7380 | Train_5 Acc 0.9466 | Test_1 Acc 0.5534 | Test_5 Acc 0.8304 |Train Time 0.533 (0.097) |Test Time 3.521 (2.443)
+Epoch 0125 | Train_1 Acc 0.7380 | Train_5 Acc 0.9461 | Test_1 Acc 0.5526 | Test_5 Acc 0.8295 |Train Time 0.680 (0.094) |Test Time 3.332 (2.452)
+Epoch 0126 | Train_1 Acc 0.7397 | Train_5 Acc 0.9461 | Test_1 Acc 0.5538 | Test_5 Acc 0.8301 |Train Time 0.554 (0.101) |Test Time 3.465 (2.462)
+Epoch 0127 | Train_1 Acc 0.7369 | Train_5 Acc 0.9459 | Test_1 Acc 0.5549 | Test_5 Acc 0.8315 |Train Time 0.564 (0.095) |Test Time 3.529 (2.473)
+Epoch 0128 | Train_1 Acc 0.7394 | Train_5 Acc 0.9453 | Test_1 Acc 0.5523 | Test_5 Acc 0.8289 |Train Time 0.533 (0.096) |Test Time 3.828 (2.486)
+Epoch 0129 | Train_1 Acc 0.7389 | Train_5 Acc 0.9473 | Test_1 Acc 0.5517 | Test_5 Acc 0.8295 |Train Time 0.551 (0.103) |Test Time 3.822 (2.500)
+Epoch 0130 | Train_1 Acc 0.7392 | Train_5 Acc 0.9455 | Test_1 Acc 0.5555 | Test_5 Acc 0.8308 |Train Time 0.531 (0.091) |Test Time 3.885 (2.514)
+Epoch 0131 | Train_1 Acc 0.7401 | Train_5 Acc 0.9458 | Test_1 Acc 0.5539 | Test_5 Acc 0.8305 |Train Time 0.577 (0.100) |Test Time 3.527 (2.524)
+Epoch 0132 | Train_1 Acc 0.7395 | Train_5 Acc 0.9458 | Test_1 Acc 0.5532 | Test_5 Acc 0.8294 |Train Time 0.559 (0.105) |Test Time 3.911 (2.538)
+Epoch 0133 | Train_1 Acc 0.7368 | Train_5 Acc 0.9459 | Test_1 Acc 0.5528 | Test_5 Acc 0.8310 |Train Time 0.771 (0.096) |Test Time 3.603 (2.548)
+Epoch 0134 | Train_1 Acc 0.7405 | Train_5 Acc 0.9468 | Test_1 Acc 0.5550 | Test_5 Acc 0.8303 |Train Time 0.813 (0.108) |Test Time 3.827 (2.561)
+Epoch 0135 | Train_1 Acc 0.7404 | Train_5 Acc 0.9465 | Test_1 Acc 0.5519 | Test_5 Acc 0.8314 |Train Time 0.650 (0.121) |Test Time 3.832 (2.574)
+Epoch 0136 | Train_1 Acc 0.7410 | Train_5 Acc 0.9475 | Test_1 Acc 0.5534 | Test_5 Acc 0.8308 |Train Time 0.752 (0.109) |Test Time 4.113 (2.589)
+Epoch 0137 | Train_1 Acc 0.7386 | Train_5 Acc 0.9475 | Test_1 Acc 0.5525 | Test_5 Acc 0.8293 |Train Time 0.671 (0.127) |Test Time 4.368 (2.607)
+Epoch 0138 | Train_1 Acc 0.7383 | Train_5 Acc 0.9451 | Test_1 Acc 0.5515 | Test_5 Acc 0.8309 |Train Time 0.656 (0.138) |Test Time 4.487 (2.626)
+Epoch 0139 | Train_1 Acc 0.7417 | Train_5 Acc 0.9455 | Test_1 Acc 0.5533 | Test_5 Acc 0.8307 |Train Time 0.787 (0.121) |Test Time 4.584 (2.645)
+Epoch 0140 | Train_1 Acc 0.7415 | Train_5 Acc 0.9465 | Test_1 Acc 0.5535 | Test_5 Acc 0.8304 |Train Time 0.607 (0.130) |Test Time 4.829 (2.667)
+Epoch 0141 | Train_1 Acc 0.7393 | Train_5 Acc 0.9461 | Test_1 Acc 0.5536 | Test_5 Acc 0.8312 |Train Time 0.982 (0.148) |Test Time 5.208 (2.693)
+Epoch 0142 | Train_1 Acc 0.7409 | Train_5 Acc 0.9481 | Test_1 Acc 0.5535 | Test_5 Acc 0.8306 |Train Time 0.888 (0.135) |Test Time 5.534 (2.721)
+Epoch 0143 | Train_1 Acc 0.7388 | Train_5 Acc 0.9454 | Test_1 Acc 0.5536 | Test_5 Acc 0.8303 |Train Time 0.795 (0.149) |Test Time 5.339 (2.747)
+Epoch 0144 | Train_1 Acc 0.7395 | Train_5 Acc 0.9470 | Test_1 Acc 0.5531 | Test_5 Acc 0.8309 |Train Time 2.631 (0.168) |Test Time 4.972 (2.769)
+Epoch 0145 | Train_1 Acc 0.7409 | Train_5 Acc 0.9461 | Test_1 Acc 0.5537 | Test_5 Acc 0.8304 |Train Time 42.535 (3.300) |Test Time 6.585 (2.808)
+Epoch 0146 | Train_1 Acc 0.7409 | Train_5 Acc 0.9479 | Test_1 Acc 0.5531 | Test_5 Acc 0.8304 |Train Time 0.857 (0.242) |Test Time 6.123 (2.841)
+Epoch 0147 | Train_1 Acc 0.7420 | Train_5 Acc 0.9468 | Test_1 Acc 0.5537 | Test_5 Acc 0.8306 |Train Time 0.949 (0.193) |Test Time 6.912 (2.881)
+Epoch 0148 | Train_1 Acc 0.7434 | Train_5 Acc 0.9470 | Test_1 Acc 0.5530 | Test_5 Acc 0.8314 |Train Time 0.896 (0.183) |Test Time 6.784 (2.921)
+Epoch 0149 | Train_1 Acc 0.7400 | Train_5 Acc 0.9479 | Test_1 Acc 0.5526 | Test_5 Acc 0.8306 |Train Time 0.860 (0.171) |Test Time 6.890 (2.960)
+Epoch 0150 | Train_1 Acc 0.7407 | Train_5 Acc 0.9469 | Test_1 Acc 0.5531 | Test_5 Acc 0.8308 |Train Time 1.082 (0.169) |Test Time 6.239 (2.993)
+Epoch 0151 | Train_1 Acc 0.7392 | Train_5 Acc 0.9474 | Test_1 Acc 0.5527 | Test_5 Acc 0.8303 |Train Time 1.126 (0.157) |Test Time 6.867 (3.032)
+Epoch 0152 | Train_1 Acc 0.7421 | Train_5 Acc 0.9457 | Test_1 Acc 0.5530 | Test_5 Acc 0.8297 |Train Time 0.904 (0.172) |Test Time 6.769 (3.069)
+Epoch 0153 | Train_1 Acc 0.7389 | Train_5 Acc 0.9463 | Test_1 Acc 0.5531 | Test_5 Acc 0.8304 |Train Time 1.083 (0.189) |Test Time 6.718 (3.106)
+Epoch 0154 | Train_1 Acc 0.7430 | Train_5 Acc 0.9466 | Test_1 Acc 0.5539 | Test_5 Acc 0.8303 |Train Time 1.253 (0.187) |Test Time 6.644 (3.141)
+Epoch 0155 | Train_1 Acc 0.7395 | Train_5 Acc 0.9468 | Test_1 Acc 0.5529 | Test_5 Acc 0.8300 |Train Time 1.209 (0.188) |Test Time 6.836 (3.178)
+Epoch 0156 | Train_1 Acc 0.7406 | Train_5 Acc 0.9473 | Test_1 Acc 0.5528 | Test_5 Acc 0.8298 |Train Time 0.830 (0.188) |Test Time 5.973 (3.206)
+Epoch 0157 | Train_1 Acc 0.7397 | Train_5 Acc 0.9458 | Test_1 Acc 0.5534 | Test_5 Acc 0.8298 |Train Time 1.286 (0.177) |Test Time 7.155 (3.245)
+Epoch 0158 | Train_1 Acc 0.7410 | Train_5 Acc 0.9480 | Test_1 Acc 0.5534 | Test_5 Acc 0.8304 |Train Time 1.072 (0.174) |Test Time 6.779 (3.281)
+Epoch 0159 | Train_1 Acc 0.7400 | Train_5 Acc 0.9470 | Test_1 Acc 0.5535 | Test_5 Acc 0.8298 |Train Time 1.098 (0.196) |Test Time 6.413 (3.312)
